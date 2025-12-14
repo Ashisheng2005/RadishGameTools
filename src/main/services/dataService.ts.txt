@@ -1,0 +1,331 @@
+import { DatabaseService } from '../database/database'
+import { Session, AppData, WeeklyData } from '../../shared/types'
+
+export class DataService {
+  private db: DatabaseService
+
+  constructor() {
+    this.db = DatabaseService.getInstance()
+  }
+
+  // 获取所有应用数据
+  async getAllApps(): Promise<AppData[]> {
+    return await this.db.getAllApps()
+  }
+
+  // 获取单个应用数据
+  async getApp(id: string): Promise<AppData | null> {
+    return await this.db.getApp(id)
+  }
+
+
+  async saveApp(appData: AppData): Promise<void> {
+    try {
+
+      await this.db.saveApp(appData as AppData)
+      console.log(`应用保存成功: ${appData.name}`)
+
+    } catch (error) {
+
+      console.error('保存应用失败:', error)
+      throw error
+    }
+  }
+
+  // 记录应用启动
+  async recordAppStart(appId: string, appName: string): Promise<string> {
+    const sessionId = `session-${Date.now()}`
+    const session: Session = {
+      id: sessionId,
+      startTime: new Date().toISOString(),
+      endTime: '',
+      duration: 0,
+      status: 'running'
+    }
+
+    // 确保应用存在
+    const existingApp = await this.db.getApp(appId)
+    if (!existingApp) {
+      await this.db.saveApp({
+        id: appId,
+        name: appName,
+        description: '',
+        icon: 'default',
+        color: '#666666',
+        executablePath: '',
+        totalRuntime: 0,
+        launchCount: 0,
+        lastUsed: new Date().toISOString(),
+        category: 'Other',
+        sessions: [],
+        usageHistory: [],
+        weeklyActivity: []
+        
+      })
+    }
+
+    await this.db.addSession(session, appId)
+    return sessionId
+  }
+
+  // 记录应用结束
+  async recordAppEnd(sessionId: string, appId: string): Promise<void> {
+    const endTime = new Date().toISOString()
+    const sessions = await this.db.getAppSessions(appId, 1)
+    const session = sessions.find(s => s.id === sessionId)
+    
+    if (session && session.startTime) {
+      const startTime = new Date(session.startTime)
+      const endTimeDate = new Date(endTime)
+      const duration = Math.floor((endTimeDate.getTime() - startTime.getTime()) / 1000)
+
+      // 更新会话
+      await this.db.addSession({
+        id: sessionId,
+        startTime: session.startTime,
+        endTime,
+        duration,
+        status: 'completed'
+      }, appId)
+
+      // 更新统计信息
+      await this.db.updateAppStatistics(appId, duration)
+
+      // 更新使用记录
+      const today = new Date().toISOString().split('T')[0]
+      await this.db.updateUsageHistory(appId, today, duration)
+    }
+  }
+
+  // 获取应用使用统计
+  async getAppUsageStats(appId: string): Promise<{
+    totalRuntime: number
+    dailyAverage: number
+    sessionCount: number
+    launchCount: number
+  } | null> {
+    const app = await this.db.getApp(appId)
+    if (!app) return null
+
+    const totalRuntime = app.totalRuntime
+    const dailyAverage = totalRuntime / 7 // 7天平均
+    const sessionCount = app.sessions.length
+
+    return {
+      totalRuntime,
+      dailyAverage,
+      sessionCount,
+      launchCount: app.launchCount
+    }
+  }
+
+  // 更新应用统计数据
+  async updateAppStats(appId: string, duration: number): Promise<void> {
+    try {
+      console.log(`更新应用统计: ${appId}, 持续时间: ${duration}秒`)
+      
+      // 直接使用数据库的updateAppStatistics方法
+      await this.db.updateAppStatistics(appId, duration)
+      
+      // 更新使用历史（保持与recordAppEnd一致）
+      const today = new Date()
+      const dateStr = `${today.getMonth() + 1}/${today.getDate()}`
+      await this.db.updateUsageHistory(appId, dateStr, duration)
+      
+      console.log(`应用统计更新完成: ${appId}`)
+    } catch (error) {
+      console.error('更新应用统计失败:', error)
+      throw error
+    }
+  }
+
+  // 获取应用健康状态
+  async getAppHealthStatus(appId: string): Promise<{
+    isRunning: boolean
+    lastSession: Session | null
+    avgSessionDuration: number
+    crashRate: number
+  }> {
+    const appData = await this.db.getApp(appId)
+    if (!appData) {
+      return {
+        isRunning: false,
+        lastSession: null,
+        avgSessionDuration: 0,
+        crashRate: 0
+      }
+    }
+    
+    const sessions = appData.sessions
+    if (sessions.length === 0) {
+      return {
+        isRunning: false,
+        lastSession: null,
+        avgSessionDuration: 0,
+        crashRate: 0
+      }
+    }
+    
+    // 计算平均会话时长（只计算已完成的）
+    const completedSessions = sessions.filter(s => s.status === 'completed')
+    const totalDuration = completedSessions.reduce((sum, s) => sum + s.duration, 0)
+    const avgSessionDuration = completedSessions.length > 0 
+      ? totalDuration / completedSessions.length 
+      : 0
+    
+    // 计算崩溃率
+    const crashedSessions = sessions.filter(s => s.status === 'crashed').length
+    const crashRate = sessions.length > 0 
+      ? (crashedSessions / sessions.length) * 100 
+      : 0
+    
+    // 检查是否有正在运行的会话
+    const isRunning = sessions.some(s => s.status === 'running')
+    const lastSession = sessions[0] // 最新的会话在数组开头
+    
+    return {
+      isRunning,
+      lastSession,
+      avgSessionDuration,
+      crashRate: Number(crashRate.toFixed(2))
+    }
+  }
+
+  // 获取使用趋势
+  async getUsageTrend(appId: string, days: number = 7): Promise<{
+    dates: string[]
+    durations: number[]
+  }> {
+    const appData = await this.db.getApp(appId)
+    if (!appData) {
+      return { dates: [], durations: [] }
+    }
+    
+    const result = {
+      dates: [] as string[],
+      durations: [] as number[]
+    }
+    
+    // 获取最近days天的数据
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      // 转换为database.ts的格式 "MM/DD"
+      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+      
+      const usage = appData.usageHistory.find(u => u.date === dateStr)
+      result.dates.push(dateStr)
+      result.durations.push(usage?.duration || 0)
+    }
+    
+    return result
+  }
+
+  // 获取每周活动数据
+  async getWeeklyActivity(appId: string): Promise<WeeklyData[]> {
+    return await this.db.getAppWeeklyActivity(appId)
+  }
+
+  // 清理旧会话记录
+  async cleanupOldSessions(appId: string, keepLast: number = 50): Promise<void> {
+    const appData = await this.db.getApp(appId)
+    if (!appData || appData.sessions.length <= keepLast) return
+    
+    // 保留最新的keepLast个会话
+    appData.sessions = appData.sessions.slice(0, keepLast)
+    
+    // 保存更新后的应用数据 - 修复方法名调用
+    await this.saveApp(appData)
+    
+    console.log(`清理了 ${appId} 的旧会话，保留最近 ${keepLast} 条记录`)
+  }
+
+  // 批量处理多个应用的统计数据
+  async batchUpdateAppStats(updates: Array<{appId: string, duration: number}>): Promise<void> {
+    try {
+      const apps = await this.db.getAllApps()
+      
+      for (const update of updates) {
+        const appIndex = apps.findIndex(app => app.id === update.appId)
+        if (appIndex >= 0) {
+          apps[appIndex].totalRuntime += update.duration
+          apps[appIndex].launchCount += 1
+          apps[appIndex].lastUsed = new Date().toISOString()
+          
+          // 更新使用历史
+          const today = new Date()
+          const dateStr = `${today.getMonth() + 1}/${today.getDate()}`
+          const usageIndex = apps[appIndex].usageHistory.findIndex(usage => usage.date === dateStr)
+          if (usageIndex >= 0) {
+            apps[appIndex].usageHistory[usageIndex].duration += update.duration
+          }
+        }
+      }
+      
+      // 批量保存
+      for (const app of apps) {
+        const { sessions, usageHistory, weeklyActivity, ...rest } = app
+        await this.db.saveApp(app)
+      }
+      
+      console.log(`批量更新了 ${updates.length} 个应用的统计`)
+    } catch (error) {
+      console.error('批量更新应用统计失败:', error)
+      throw error
+    }
+  }
+
+  // 搜索应用
+  async searchApps(query: string): Promise<AppData[]> {
+    const apps = await this.db.getAllApps()
+    const lowerQuery = query.toLowerCase()
+    
+    return apps.filter(app => 
+      app.name.toLowerCase().includes(lowerQuery) ||
+      (app.description && app.description.toLowerCase().includes(lowerQuery)) ||
+      (app.category && app.category.toLowerCase().includes(lowerQuery))
+    )
+  }
+
+  // 获取最常使用应用
+  async getMostUsedApps(limit: number = 5): Promise<AppData[]> {
+    const apps = await this.db.getAllApps()
+    
+    return apps
+      .sort((a, b) => b.totalRuntime - a.totalRuntime)
+      .slice(0, limit)
+  }
+
+  // 获取最近使用的应用
+  async getRecentlyUsedApps(limit: number = 5): Promise<AppData[]> {
+    const apps = await this.db.getAllApps()
+    
+    return apps
+      .filter(app => app.lastUsed)
+      .sort((a, b) => new Date(b.lastUsed).getTime() - new Date(a.lastUsed).getTime())
+      .slice(0, limit)
+  }
+
+  // 获取应用类别列表
+  async getCategories(): Promise<string[]> {
+    const apps = await this.db.getAllApps()
+    const categories = new Set<string>()
+    
+    apps.forEach(app => {
+      if (app.category) {
+        categories.add(app.category)
+      }
+    })
+    
+    return Array.from(categories)
+  }
+  
+  // 根据类别筛选应用
+  async getAppsByCategory(category: string): Promise<AppData[]> {
+    const apps = await this.db.getAllApps()
+    return apps.filter(app => app.category === category)
+  }
+}
+
+// 单例实例
+export const dataService = new DataService()

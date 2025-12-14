@@ -1,0 +1,63 @@
+{
+  "theme": "system",
+  "immersiveMode": false,
+  "autoLaunchAtStartup": false,
+  "minimizeToSystemTray": false,
+  "showOperationHints": false,
+  "enableBackupLauncher": true,
+  "enableUsageAnalytics": true,
+  "storageLocation": "E:\\RadishGameTools",
+  "showTimer": false,
+  "submitErrorData": false,
+  "categories": [
+    {
+      "value": "development",
+      "label": "开发工具",
+      "color": "#007ACC"
+    },
+    {
+      "value": "browser",
+      "label": "浏览器",
+      "color": "#4285F4"
+    },
+    {
+      "value": "productivity",
+      "label": "效率工具",
+      "color": "#1DB954"
+    },
+    {
+      "value": "media",
+      "label": "媒体播放",
+      "color": "#FF6B6B"
+    },
+    {
+      "value": "communication",
+      "label": "通讯社交",
+      "color": "#4A154B"
+    },
+    {
+      "value": "design",
+      "label": "设计工具",
+      "color": "#F24E1E"
+    },
+    {
+      "value": "utility",
+      "label": "系统工具",
+      "color": "#333333"
+    },
+    {
+      "value": "game",
+      "label": "游戏",
+      "color": "#FF4500"
+    },
+    {
+      "value": "other",
+      "label": "其他",
+      "color": "#6B7280"
+    }
+  ],
+  "enableLogging": true,
+  "logLevel": "info",
+  "autoCleanupEnabled": false,
+  "autoOptimizeWindow": false
+}

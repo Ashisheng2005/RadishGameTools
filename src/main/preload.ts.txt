@@ -1,0 +1,46 @@
+// Electron Preload 脚本 - 暴露安全的 API 给渲染进程
+import { contextBridge, ipcRenderer } from "electron"
+
+// 暴露 electron API 到 window 对象
+contextBridge.exposeInMainWorld("electron", {
+  // 打开文件选择对话框
+  openFileDialog: (options?: {
+    filters?: Array<{ name: string; extensions: string[] }>
+    properties?: Array<"openFile" | "multiSelections">
+    defaultPath?: string
+  }) => ipcRenderer.invoke("dialog:openFile", options),
+
+  // 获取拖放文件的路径 (通过 webkitdirectory 或 Electron 特殊处理)
+  getFilePath: (file: File) => {
+    // Electron 中 File 对象有 path 属性
+    return (file as any).path || null
+  },
+
+  // 平台信息
+  platform: process.platform,
+
+  // 检查是否为 Electron 环境
+  isElectron: true,
+})
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  launchApp: (appId, executablePath) => ipcRenderer.invoke('launch-app', appId, executablePath),
+  terminateApp: (appId) => ipcRenderer.invoke('terminate-app', appId),
+  getAppStatus: (appId) => ipcRenderer.invoke('get-app-status', appId)
+});
+
+// TypeScript 类型声明
+declare global {
+  interface Window {
+    electron: {
+      openFileDialog: (options?: {
+        filters?: Array<{ name: string; extensions: string[] }>
+        properties?: Array<"openFile" | "multiSelections">
+        defaultPath?: string
+      }) => Promise<{ canceled: boolean; filePaths: string[] }>
+      getFilePath: (file: File) => string | null
+      platform: string
+      isElectron: boolean
+    }
+  }
+}

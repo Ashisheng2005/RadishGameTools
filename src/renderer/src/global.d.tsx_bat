@@ -1,0 +1,31 @@
+export interface IElectronAPI {
+  isElectron: boolean
+  platform: string
+  launchApp: (appId: string, executablePath: string) => Promise<{ success: boolean; error?: string }>
+  terminateApp: (appId: string) => Promise<{ success: boolean; error?: string }>
+  getAppStatus: (appId: string) => Promise<{ status: string; duration: number }>
+  openFileDialog: (options?: {
+    filters?: Array<{ name: string; extensions: string[] }>
+    properties?: Array<"openFile" | "multiSelections">
+    defaultPath?: string
+  }) => Promise<{ canceled: boolean; filePaths: string[] }>
+  getFilePath: (file: File) => string | null
+  
+  getAllApps: () => Promise<AppData[]>
+
+  getApp: () => Promise<AppData | null>
+
+  recordAppStart: () => Promise<string>
+
+  recordAppEnd: () => Promise<void>
+
+  getAppStart: () => Promise<{totalRuntime: number, dailyAverage: number, sessionCount: number, launchCount: number } | null>
+
+  saveApp: () => Promise<void>
+}
+
+declare global {
+  interface Window {
+    electronAPI: IElectronAPI
+  }
+}

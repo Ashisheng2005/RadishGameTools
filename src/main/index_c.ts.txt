@@ -1,0 +1,197 @@
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
+// import { join } from 'path'
+import path from 'path'
+import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import icon from '../../resources/icon.png?asset'
+import { AppLauncher } from './native';
+import {dataService} from '../main/services/dataService'
+import { AppData } from '../shared/types';
+
+
+// let mainWindow: BrowserWindow | null = null
+
+// 设置 IPC 通信
+// 处理文件选择对话框
+// 添加文件对话框 IPC 处理器
+ipcMain.handle('dialog:openFile', async (_, options) => {
+  const result = await dialog.showOpenDialog({
+    properties: options?.properties || ['openFile'],
+    filters: options?.filters || [
+      { name: '可执行文件', extensions: ['exe'] },
+      { name: '所有文件', extensions: ['*'] }
+    ],
+    defaultPath: options?.defaultPath
+  })
+  return result
+})
+
+ipcMain.handle('launch-app', async (_, appId: string, executablePath: string) => {
+  try {
+    const success = AppLauncher.launchApp(appId, executablePath);
+    return { success };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle('terminate-app', async (_, appId: string) => {
+  try {
+    const success = AppLauncher.terminateApp(appId);
+    return { success };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle('get-app-status', async (_, appId: string) => {
+  try {
+    const status = AppLauncher.getStatus(appId);
+    const duration = AppLauncher.getDuration(appId);
+    return { status, duration };
+  } catch (error) {
+    return { status: 'error', duration: 0, error: String(error) };
+  }
+});
+
+// 获取所有应用数据
+ipcMain.handle('get-all-apps', async () => {
+  return await dataService.getAllApps()
+})
+
+// 获取单个应用数据
+ipcMain.handle('get-app', async (_, appId: string) => {
+  return await dataService.getApp(appId)
+})
+
+// 记录应用启动
+ipcMain.handle('record-app-start', async (_, appId: string, appName: string) => {
+  return await dataService.recordAppStart(appId, appName)
+})
+
+// 记录应用结束
+ipcMain.handle('record-app-end', async (_, sessionId: string, appId: string) => {
+  await dataService.recordAppEnd(sessionId, appId)
+})
+
+// 获取使用统计
+ipcMain.handle('get-app-stats', async (_, appId: string) => {
+  return await dataService.getAppUsageStats(appId)
+})
+
+// 保存应用
+ipcMain.handle('save-app', async (_, appData: AppData) => {
+    return await dataService.SaveApp(appData)
+})
+
+function createWindow(): void {
+
+  // 在开发模式下使用源码，生产模式下使用构建文件
+  const preloadPath = is.dev && process.env['ELECTRON_RENDERER_URL']
+    ? path.join(__dirname, '../preload/index.js')  // 开发模式指向源码
+    : path.join(__dirname, '../preload/index.js')         // 生产模式指向构建文件
+  
+  // console.log('预加载路径:', preloadPath)
+  
+
+  // 添加详细的路径调试
+  // const preloadPath = join(__dirname, '../preload/index.js')
+  console.log('预加载脚本路径:', preloadPath)
+  
+  // 检查文件是否存在
+  const fs = require('fs')
+  console.log('预加载文件是否存在:', fs.existsSync(preloadPath))
+  
+  if (!fs.existsSync(preloadPath)) {
+    console.error('预加载文件不存在！')
+    // 列出目录内容
+    const dir = path.join(__dirname, '..')
+    console.log('上级目录内容:', fs.readdirSync(dir))
+  }
+
+  // Create the browser window.
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    show: false,
+    autoHideMenuBar: true,
+    ...(process.platform === 'linux' ? { icon } : {}),
+    webPreferences: {
+      preload: preloadPath,
+      
+      contextIsolation: true,
+      nodeIntegration: false,
+      // 允许渲染进程访问 file.path
+      webSecurity: true,
+    },
+  })
+
+  mainWindow.on('ready-to-show', () => {
+    mainWindow.show()
+  })
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
+
+  // HMR for renderer base on electron-vite cli.
+  // Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'))
+  }
+
+  // 开发环境加载 localhost，生产环境加载打包后的文件
+  // if (process.env.NODE_ENV === "development") {
+  //   mainWindow.loadURL("http://localhost:5173")
+  //   mainWindow.webContents.openDevTools()
+  // } else {
+  //   mainWindow.loadFile(path.join(__dirname, "../dist/index.html"))
+  // }
+}
+
+
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.whenReady().then(() => {
+  // Set app user model id for windows
+  electronApp.setAppUserModelId('com.electron')
+
+  // Default open or close DevTools by F12 in development
+  // and ignore CommandOrControl + R in production.
+  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  // IPC test
+  ipcMain.on('ping', () => console.log('pong'))
+
+  createWindow()
+
+  app.on('activate', function () {
+    // On macOS it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
+})
+// In this file you can include the rest of your app's specific main process
+// code. You can also put them in separate files and require them here.
