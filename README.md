@@ -6,26 +6,29 @@
         <span > Radish GameTools</span>
     </h1>
 </div>
-
 <p align="center" style="font-family: 'Roboto', sans-serif; font-size: 1em; color: #555;">
     <img title="QQ Group" src="https://img.shields.io/badge/QQ群-983104022-brightgreen" style="margin: 0 10px;">
+    <img title="Github" src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white">
+    <img title="Typescript" src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white">
+    <img title="Version" src="https://img.shields.io/badge/RadishGameTools-v0.0.2dev-blue">
 </p>
+
 
 ​		
 
-​		**RadishGameTools** 是一个基于 **Electron + React + TypeScript** 技术栈构建的现代化桌面应用启动器和软件使用统计工具。项目采用 **C++ 原生模块** 处理高性能图标提取和系统调用，结合 **Better-SQLite3** 数据库实现结构化数据管理。架构上采用清晰的主进程/渲染进程分离设计，通过 **Electron IPC** 实现进程间通信，配合 **shadcn/ui + Tailwind CSS** 提供现代化响应式界面。项目融合了原生性能优势与现代前端开发实践，实现了智能应用管理、详细使用统计和跨平台系统深度集成。but，如果你要问我为什么不用steam？难道你不是鬼使神差的点开某个游戏然后玩一下午吗？（笑）
+​         **RadishGameTools** 是一个基于 **Electron + React + TypeScript** 技术栈构建的现代化桌面应用启动器和软件使用统计工具。项目采用 **C++ 原生模块** 处理高性能图标提取和系统调用，结合 **Better-SQLite3** 数据库实现结构化数据管理。架构上采用清晰的主进程/渲染进程分离设计，通过 **Electron IPC** 实现进程间通信，配合 **shadcn/ui + Tailwind CSS** 提供现代化响应式界面。项目融合了原生性能优势与现代前端开发实践，实现了智能应用管理、详细使用统计和跨平台系统深度集成。but，如果你要问我为什么不用steam？难道你不会鬼使神差的点开某个游戏然后玩一下午吗？（笑）
 
-> 当前处于开发版本，部分功能并不完善，很期待能够有更多的人加入这个项目一切完善它
+> :warning: 当前处于开发版本，部分功能并不完善，很期待能够有更多的人加入这个项目一切完善它
 >
-> 版本号中包含 *dev* 即表示属于开发测试版本
+> :warning: 版本号中包含 *dev* 即表示属于开发测试版本
 
 
 
-![github_1](.\resources\github_1.png)
+<img src="\resources\github_1.png" alt="koe" width="850px" height="500px">
 
 
 
-![github_1](.\resources\github_2.png)
+<img src="\resources\github_2.png" alt="koe" width="850px" height="500px">
 
 
 
@@ -230,6 +233,8 @@ pnpm build:linux
 
 - **在线版本检测和新版本下载**：通过 github 和 主站（radishtools.fun） 实现
 
+- **多语言支持** ： 通过以插件补丁的方式实现多语言的支持
+
   
 
 ## 📄 许可证
@@ -247,7 +252,7 @@ pnpm build:linux
 ## 📞 联系方式
 
 如有问题或建议，请通过以下方式联系告知：
-- 提交 [GitHub Issue](https://github.com/yourusername/RadishGameTools/issues)
+- 提交 [GitHub Issue](https://github.com/Ashisheng2005/RadishGameTools/issues)
 - 发送邮件至 Repork@qq.com
 - 注册 https://radishtools.fun/blog 发布相关博客
 
