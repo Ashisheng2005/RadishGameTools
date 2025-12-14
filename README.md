@@ -2,14 +2,22 @@
 
 <div align="center">
     <h1>
-        <img src="./resources/favicon.png" alt="koe" width="50px" height="50px">
+        <img src="./resources/favicon.png" alt="koe" width="55px" height="50px">
         <span > Radish GameTools</span>
     </h1>
 </div>
 
-一个现代化的桌面应用启动器和软件使用统计工具，基于 Electron + React + TypeScript 构建。
+<p align="center" style="font-family: 'Roboto', sans-serif; font-size: 1em; color: #555;">
+    <img title="QQ Group" src="https://img.shields.io/badge/QQ群-983104022-brightgreen" style="margin: 0 10px;">
+</p>
 
+​		
 
+​		**RadishGameTools** 是一个基于 **Electron + React + TypeScript** 技术栈构建的现代化桌面应用启动器和软件使用统计工具。项目采用 **C++ 原生模块** 处理高性能图标提取和系统调用，结合 **Better-SQLite3** 数据库实现结构化数据管理。架构上采用清晰的主进程/渲染进程分离设计，通过 **Electron IPC** 实现进程间通信，配合 **shadcn/ui + Tailwind CSS** 提供现代化响应式界面。项目融合了原生性能优势与现代前端开发实践，实现了智能应用管理、详细使用统计和跨平台系统深度集成。but，如果你要问我为什么不用steam？难道你不是鬼使神差的点开某个游戏然后玩一下午吗？（笑）
+
+> 当前处于开发版本，部分功能并不完善，很期待能够有更多的人加入这个项目一切完善它
+>
+> 版本号中包含 *dev* 即表示属于开发测试版本
 
 
 
@@ -21,34 +29,6 @@
 
 
 
-
-
-## ✨ 功能特性
-
-### 🚀 应用管理
-- **智能应用启动器**：快速启动和管理桌面应用程序
-- **应用分类管理**：支持自定义分类，方便组织应用
-- **应用图标提取**：自动从可执行文件提取图标
-- **应用设置自定义**：为每个应用配置启动参数和选项
-
-### 📊 使用统计
-- **详细使用记录**：自动记录每个应用的使用时长
-- **数据可视化**：使用 Recharts 展示使用统计图表
-- **会话管理**：跟踪应用启动、运行和关闭状态
-- **历史数据分析**：查看每日、每周、每月的使用情况
-
-### ⚙️ 系统集成
-- **开机自启动**：支持系统启动时自动运行
-- **系统托盘**：最小化到系统托盘，方便快速访问
-- **原生模块**：使用 C++ 原生模块进行高性能图标提取
-- **数据库存储**：使用 SQLite 存储应用数据和使用记录
-
-### 🎨 用户界面
-- **现代化 UI**：基于 Tailwind CSS 和 Radix UI 组件构建
-- **主题切换**：支持亮色、暗色和系统主题
-- **响应式布局**：可调整大小的侧边栏和面板
-- **沉浸模式**：专注模式，减少干扰
-
 ## 🏗️ 技术栈
 
 ### 前端
@@ -56,7 +36,7 @@
 - **React 19** - 用户界面库
 - **TypeScript** - 类型安全的 JavaScript
 - **Tailwind CSS** - 实用优先的 CSS 框架
-- **Radix UI** - 无样式、可访问的 UI 组件
+- **shadcn/ui**  - 多种样式、可访问的 UI 组件
 - **Recharts** - 图表可视化库
 
 ### 后端
@@ -95,13 +75,14 @@ RadishGameTools/
 └── config/                     # 配置文件
 ```
 
+
+
 ## 🚀 快速开始
 
 ### 环境要求
 - Node.js 18+
 - pnpm 8+
 - Python 3.x (用于构建原生模块)
-- Windows SDK (Windows 平台)
 
 ### 安装依赖
 ```bash
@@ -112,10 +93,80 @@ pnpm install
 pnpm run build:native
 ```
 
+### 额外的包
+
+```json
+# 可见于package.json中的部分，如果出现环境问题可优先根据此处的包检查是否有遗漏
+
+"dependencies": {
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
+    "@radix-ui/react-alert-dialog": "^1.1.15",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "app-launcher-native": "file:./native",
+    "auto-launch": "^5.0.6",
+    "better-sqlite3": "^12.5.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "electron-updater": "^6.3.9",
+    "lucide-react": "^0.555.0",
+    "node-addon-api": "^8.5.0",
+    "postcss": "^8.5.6",
+    "react-resizable-panels": "^3.0.6",
+    "recharts": "^3.5.1",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.17",
+    "tw-animate-css": "^1.4.0",
+    "uuid": "^13.0.0"
+    
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-toolkit/eslint-config-prettier": "^3.0.0",
+    "@electron-toolkit/eslint-config-ts": "^3.1.0",
+    "@electron-toolkit/tsconfig": "^2.0.0",
+    "@electron/rebuild": "^4.0.1",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^22.18.6",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.3",
+    "sqlite3": "^5.1.7",
+    "sirv": "^3.0.2",
+    "ws": "^8.18.3",
+    "opener": "^1.5.2",
+    "electron": "^38.1.2",
+    "electron-builder": "^25.1.8",
+    "electron-rebuild": "^3.2.9",
+    "electron-vite": "^4.0.1",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "next": "^16.0.5",
+    "node-gyp": "^12.1.0",
+    "prettier": "^3.6.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.6"
+  },
+```
+
+
+
 ### 开发模式
+
 ```bash
 # 启动开发服务器
-pnpm dev
+pnpm run dev
 ```
 
 ### 构建应用
@@ -130,32 +181,22 @@ pnpm build:mac
 pnpm build:linux
 ```
 
-## 🔧 配置说明
 
-### 应用配置
-应用支持以下配置选项：
-- **主题设置**：亮色/暗色/系统主题
-- **启动行为**：开机自启动、最小化到托盘
-- **数据统计**：使用统计、日志记录
-- **系统集成**：图标提取、进程管理
-
-### 数据库
-应用使用 SQLite 数据库存储数据，包含以下表：
-- `apps` - 应用基本信息和使用统计
-- `sessions` - 应用会话记录
-- `logs` - 系统日志
-- `stats` - 统计数据
 
 ## 🛠️ 原生模块
 
 项目包含两个原生 C++ 模块：
 
 ### 1. App Launcher (`app_launcher`)
+
+> 因为框架权限沙箱原因，这部分实现后并未启用
+
 - 高性能应用启动管理
 - 进程状态监控
 - 系统集成功能
 
 ### 2. Icon Thumbnail (`icon_thumbnail`)
+
 - 从可执行文件提取图标
 - 图标缩略图生成
 - 系统图标缓存
@@ -173,41 +214,43 @@ pnpm build:linux
 - **分类统计**：按应用分类分析使用情况
 - **效率分析**：识别使用模式和优化建议
 
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
-### 开发流程
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建 Pull Request
-
 ### 代码规范
 - 使用 TypeScript 并启用严格模式
 - 遵循 ESLint 和 Prettier 配置
 - 编写清晰的注释和文档
-- 添加适当的测试
+- 添加适当的测试，尤其是原生模块需要进行测试后调用！
+
+## 🔮 未来扩展
+
+在之后的版本中，我们会优先向一下方向推进，同时也欢迎所有人提供意见
+
+- **云同步**：用户数据跨设备同步
+
+- **插件系统**：第三方功能扩展
+
+- **在线版本检测和新版本下载**：通过 github 和 主站（radishtools.fun） 实现
+
+  
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
+本项目采用 MIT 许可证
 
 ## 🙏 致谢
 
 - [Electron](https://www.electronjs.org/) - 跨平台桌面应用框架
 - [React](https://reactjs.org/) - 用户界面库
 - [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
-- [Radix UI](https://www.radix-ui.com/) - UI 组件库
+-  **shadcn/ui** - UI 组件库
 - [Recharts](https://recharts.org/) - 图表库
 
 ## 📞 联系方式
 
-如有问题或建议，请通过以下方式联系：
+如有问题或建议，请通过以下方式联系告知：
 - 提交 [GitHub Issue](https://github.com/yourusername/RadishGameTools/issues)
 - 发送邮件至 Repork@qq.com
+- 注册 https://radishtools.fun/blog 发布相关博客
 
 ---
 
-**RadishGameTools** - 让您的应用管理更智能、更高效！ 🚀
+**RadishGameTools** - 让您的应用管理更智能、更高效！ 芜湖，全都给我飞起来！🚀
