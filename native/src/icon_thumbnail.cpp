@@ -60,14 +60,74 @@ CLSID GetPngEncoderClsid() {
     return CLSID_NULL;
 }
 
+// 处理黑色边缘为透明
+bool ProcessBlackEdgesToTransparent(Bitmap* bitmap) {
+    if (!bitmap) return false;
+    
+    int width = bitmap->GetWidth();
+    int height = bitmap->GetHeight();
+    
+    // 锁定位图进行像素操作
+    BitmapData bitmapData;
+    Rect rect(0, 0, width, height);
+    
+    if (bitmap->LockBits(&rect, ImageLockModeRead | ImageLockModeWrite, 
+                        PixelFormat32bppARGB, &bitmapData) != Ok) {
+        return false;
+    }
+    
+    BYTE* pixels = (BYTE*)bitmapData.Scan0;
+    int stride = bitmapData.Stride;
+    
+    // 只处理边缘像素（四周边界）
+    for (int y = 0; y < height; y++) {
+        BYTE* row = pixels + (y * stride);
+        for (int x = 0; x < width; x++) {
+            // 只处理图像边缘的像素（四周边界）
+            if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+                BYTE* pixel = row + (x * 4); // 32bpp ARGB
+                
+                // 检查是否为纯黑色（RGB=0,0,0）
+                if (pixel[2] == 0 && pixel[1] == 0 && pixel[0] == 0) {
+                    // 将Alpha通道设为0（完全透明）
+                    pixel[3] = 0;
+                }
+            }
+        }
+    }
+    
+    bitmap->UnlockBits(&bitmapData);
+    return true;
+}
+
 // 保存位图到内存
 bool SaveBitmapToBuffer(HBITMAP hBitmap, std::vector<BYTE>& buffer) {
     if (!hBitmap) return false;
+
+    // 获取位图的宽高
+    BITMAP bm;
+    GetObject(hBitmap, sizeof(bm), &bm);
+
+    // 强制使用 32bppARGB 格式创建位图，以保留 Alpha 通道
+    std::unique_ptr<Bitmap> bitmap;
+
+    // 如果是图标类（带有透明度），检查状态
+    // if (!bitmap || bitmap->GetLastStatus() != Ok) return false;
     
-    std::unique_ptr<Bitmap> bitmap(Bitmap::FromHBITMAP(hBitmap, NULL));
-    if (!bitmap || bitmap->GetLastStatus() != Ok) {
-        return false;
+    // std::unique_ptr<Bitmap> bitmap(Bitmap::FromHBITMAP(hBitmap, NULL));
+    if (bm.bmBitsPixel == 32) {
+        // 如果是32位位图，我们需要直接读取像素数据以保留 Alpha
+        bitmap.reset(new Bitmap(bm.bmWidth, bm.bmHeight, bm.bmWidthBytes, 
+                               PixelFormat32bppARGB, (BYTE*)bm.bmBits));
+    } else {
+        // 普通位图则直接转换
+        bitmap.reset(Bitmap::FromHBITMAP(hBitmap, NULL));
     }
+
+    if (!bitmap || bitmap->GetLastStatus() != Ok) return false;
+    
+    // // 处理黑色边缘为透明
+    // ProcessBlackEdgesToTransparent(bitmap.get());
     
     IStream* stream = NULL;
     if (CreateStreamOnHGlobal(NULL, TRUE, &stream) != S_OK) {
@@ -123,6 +183,7 @@ bool ExtractThumbnailInternal(const std::wstring& filePath, int size,
         return false;
     }
     
+    
     IShellItemImageFactory* pFactory = NULL;
     HBITMAP hBitmap = NULL;
     bool success = false;
@@ -160,7 +221,7 @@ Napi::Value ExtractThumbnail(const Napi::CallbackInfo& info) {
     
     std::string filePath = info[0].As<Napi::String>().Utf8Value();
     int size = 256;
-    DWORD flags = SIIGBF_BIGGERSIZEOK;
+    DWORD flags = SIIGBF_BIGGERSIZEOK | SIIGBF_RESIZETOFIT;
     
     if (info.Length() > 1 && info[1].IsNumber()) {
         size = info[1].As<Napi::Number>().Int32Value();
@@ -191,12 +252,12 @@ Napi::Value ExtractThumbnailToFile(const Napi::CallbackInfo& info) {
     std::string filePath = info[0].As<Napi::String>().Utf8Value();
     std::string outputPath = info[1].As<Napi::String>().Utf8Value();
     int size = 256;
-    DWORD flags = SIIGBF_BIGGERSIZEOK;
+    DWORD flags = SIIGBF_BIGGERSIZEOK | SIIGBF_RESIZETOFIT;
     
     if (info.Length() > 2 && info[2].IsNumber()) {
         size = info[2].As<Napi::Number>().Int32Value();
         size = std::max(16, std::min(size, 1024));
-        flags = SIIGBF_RESIZETOFIT | SIIGBF_ICONONLY;
+        flags = SIIGBF_RESIZETOFIT | SIIGBF_ICONONLY ;
     }
     
     std::wstring wFilePath = Utf8ToWide(filePath);
@@ -254,12 +315,12 @@ Napi::Value ExtractThumbnails(const Napi::CallbackInfo& info) {
     
     Napi::Array filePaths = info[0].As<Napi::Array>();
     int size = 256;
-    DWORD flags = SIIGBF_BIGGERSIZEOK;
+    DWORD flags = SIIGBF_BIGGERSIZEOK | SIIGBF_RESIZETOFIT;
     
     if (info.Length() > 1 && info[1].IsNumber()) {
         size = info[1].As<Napi::Number>().Int32Value();
         size = std::max(16, std::min(size, 1024));
-        flags = SIIGBF_RESIZETOFIT | SIIGBF_ICONONLY;
+        flags = SIIGBF_RESIZETOFIT | SIIGBF_ICONONLY ;
     }
     
     Napi::Array results = Napi::Array::New(env, filePaths.Length());
@@ -300,6 +361,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     flags.Set("RESIZETOFIT", Napi::Number::New(env, SIIGBF_RESIZETOFIT));
     flags.Set("ICONONLY", Napi::Number::New(env, SIIGBF_ICONONLY));
     flags.Set("THUMBNAILONLY", Napi::Number::New(env, SIIGBF_THUMBNAILONLY));
+    flags.Set("ICONBACKGROUND", Napi::Number::New(env, SIIGBF_ICONBACKGROUND));
     exports.Set("FLAGS", flags);
     
     return exports;

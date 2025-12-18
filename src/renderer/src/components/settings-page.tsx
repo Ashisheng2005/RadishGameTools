@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import { AppConfig } from "@shared/types"
+import { useTheme } from "@/components/themo-provider"
 
 interface SettingsPageProps {
   onBack: () => void
@@ -37,7 +38,7 @@ interface SettingsPageProps {
 type SettingsSection = "appearance" | "behavior" | "data" | "about"
 
 export function SettingsPage({ onBack }: SettingsPageProps) {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("dark")
+  const [selfTheme, setSelfTheme] = useState<"light" | "dark" | "system">("dark")
   const [autoStart, setAutoStart] = useState(false)
   const [minimizeToTray, setMinimizeToTray] = useState(false)
   const [notifications, setNotifications] = useState(false)
@@ -58,10 +59,13 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [autoOptimizeWindow, setAutoOptimizeWindow] = useState(true)
   const [dataPath, setDataPath] = useState("null")
   const [activeSection, setActiveSection] = useState<SettingsSection>("appearance")
+  // 全局主题
+  const { setTheme } = useTheme()
 
   useEffect(() => {
     // 在组件加载时获取当前配置
     window.electronAPI.getConfig().then((config) => {
+      setSelfTheme(config.theme)
       setTheme(config.theme)
       setAutoStart(config.autoLaunchAtStartup)
       setMinimizeToTray(config.minimizeToSystemTray)
@@ -119,7 +123,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     
     // 构建新的配置对象
     const newConfig: AppConfig= {
-      theme,
+      theme: selfTheme,
       autoLaunchAtStartup: autoStart,
       minimizeToSystemTray: minimizeToTray,
       showOperationHints: notifications,
@@ -199,11 +203,11 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between gap-4">
-                        <Label htmlFor="theme" className="flex items-center gap-2">
-                          {theme === "dark" ? <Moon className="h-4 w-4" /> : theme === "light" ? <Sun className="h-4 w-4" /> : <MonitorCog className="h-4 w-4" />}
+                        <Label htmlFor="selfTheme" className="flex items-center gap-2">
+                          {selfTheme === "dark" ? <Moon className="h-4 w-4" /> : selfTheme === "light" ? <Sun className="h-4 w-4" /> : <MonitorCog className="h-4 w-4" />}
                           主题模式
                         </Label>
-                        <Select value={theme} onValueChange={(v) => setTheme(v as typeof theme)}>
+                        <Select value={selfTheme} onValueChange={(v) => {setSelfTheme(v as typeof selfTheme); setTheme(v as typeof selfTheme)}}>
                           <SelectTrigger className="w-[140px] bg-muted/50 border-border">
                             <SelectValue />
                           </SelectTrigger>

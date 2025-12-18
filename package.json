@@ -1,9 +1,9 @@
 {
   "name": "radishgametools",
-  "version": "0.0.2",
-  "description": "Software management and recording tools",
+  "version": "0.0.3",
+  "description": "SRadish GameTools",
   "main": "./out/main/index.js",
-  "author": "RadishTools.fun",
+  "author": "Repork",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -97,7 +97,7 @@
     ]
   },
   "build": {
-    "appId": "com.radishgametools.radishtools",
+    "appId": "app.radishgametools.radishtools",
     "productName": "RadishGameTools",
     "win": {
       "target": [

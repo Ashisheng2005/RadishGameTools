@@ -58,7 +58,7 @@ export class ConfigManager {
         
         // 数据管理
         enableUsageAnalytics: true,
-        storageLocation: path.join(process.cwd(), 'save') ,
+        storageLocation: process.cwd(),
         showTimer: true,
         submitErrorData: false,
         categories: [

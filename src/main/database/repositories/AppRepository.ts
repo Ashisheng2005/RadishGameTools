@@ -1,15 +1,13 @@
-import Database from 'better-sqlite3';
-import { DatabaseManager } from '../db';
-import { AppData } from '../../../shared/types';
-// import { DatabaseLogger } from '../logger';
+import Database from 'better-sqlite3'
+import { DatabaseManager } from '../db'
+import { AppData } from '../../../shared/types'
+import { Logger } from '../../services/loggerService'
 
 export class AppRepository {
-    private db: Database;
-    // private logger: DatabaseLogger;
+    private db: Database
 
     constructor() {
-        this.db = DatabaseManager.getInstance().getDatabase();
-        // this.logger = DatabaseLogger.getInstance();
+        this.db = DatabaseManager.getInstance().getDatabase()
     }
     
     // 辅助函数：将数据库行转换为 AppData 接口
@@ -17,7 +15,7 @@ export class AppRepository {
         // 注意：AppData 接口中包含 sessions, usageHistory, weeklyActivity 等，
         // 这些信息通常需要从其他表 JOIN 或单独查询获取。
         // 为了简化，这里只映射 apps 表中的字段。
-        // 在实际应用中，如果需要完整的 AppData，你需要在 Service 层进行组装。
+        // 在实际应用中，完整的 AppData需要在 Service 层进行组装。
         return {
             id: row.id,
             name: row.name,
@@ -30,40 +28,41 @@ export class AppRepository {
             totalRuntime: row.totalRuntime,
             launchCount: row.launchCount,
             lastUsed: row.lastUsed,
-            sessions: [], // 需要单独查询
-            usageHistory: [], // 需要单独查询
-            weeklyActivity: [], // 需要单独查询
+            // 一下三项需要单独查询
+            sessions: [], 
+            usageHistory: [],
+            weeklyActivity: [],
         } as AppData;
     }
 
     // 获取所有应用
     public async getAllApps(limit?: number, offset?: number): Promise<AppData[]> {
-        let sql = `SELECT * FROM apps ORDER BY lastUsed DESC`;
-        const params: (number)[] = [];
+        let sql = `SELECT * FROM apps ORDER BY lastUsed DESC`
+        const params: (number)[] = []
 
         if (limit !== undefined) {
-            sql += ` LIMIT ?`;
-            params.push(limit);
+            sql += ` LIMIT ?`
+            params.push(limit)
             if (offset !== undefined) {
-                sql += ` OFFSET ?`;
-                params.push(offset);
+                sql += ` OFFSET ?`
+                params.push(offset)
             }
         }
 
-        const stmt = this.db.prepare(sql);
-        const rows = stmt.all(...params);
-        return rows.map(this.mapToAppData);
+        const stmt = this.db.prepare(sql)
+        const rows = stmt.all(...params)
+        return rows.map(this.mapToAppData)
     }
 
     // 根据ID获取应用
     public async getAppById(id: string): Promise<AppData | null> {
-        const stmt = this.db.prepare(`SELECT * FROM apps WHERE id = ?`);
-        const row = stmt.get(id);
+        const stmt = this.db.prepare(`SELECT * FROM apps WHERE id = ?`)
+        const row = stmt.get(id)
         
         if (row) {
-            return this.mapToAppData(row);
+            return this.mapToAppData(row)
         }
-        return null;
+        return null
     }
 
     // 保存或更新应用数据
@@ -94,38 +93,24 @@ export class AppRepository {
         stmt.run(
             id, name, description, _icon_default, icon, color, executablePath, category,
             totalRuntime, launchCount, lastUsed
-        );
-
-        // this.logger.log({
-        //     level: 'info',
-        //     operation: isUpdate ? 'UPDATE_APP' : 'INSERT_APP',
-        //     message: `App ${name} saved/updated`,
-        //     metadata: { appName: name }
-        // }, 'apps', id);
+        )
+        Logger.info('database-apprepository', `App ${name} saved/updated`)
     }
 
-    /**
-     * 删除应用
-     */
+    // 删除应用
     public async deleteApp(id: string): Promise<boolean> {
         // 由于设置了外键 ON DELETE CASCADE，删除 apps 表记录会自动删除 sessions 和 usage_history 中的相关记录。
-        const stmt = this.db.prepare(`DELETE FROM apps WHERE id = ?`);
-        const result = stmt.run(id);
+        const stmt = this.db.prepare(`DELETE FROM apps WHERE id = ?`)
+        const result = stmt.run(id)
 
         if (result.changes > 0) {
-            // this.logger.log({
-            //     level: 'warn',
-            //     operation: 'DELETE_APP',
-            //     message: `App deleted`,
-            // }, 'apps', id);
-            return true;
+            Logger.info('database-deleteApp', `delete App id is ${id}`)
+            return true
         }
-        return false;
+        return false
     }
     
-    /**
-     * 更新应用统计数据（运行时长和启动次数）
-     */
+    // 更新应用统计数据（运行时长和启动次数）
     public async updateAppStats(appId: string, duration: number): Promise<void> {
         const sql = `
             UPDATE apps
@@ -133,22 +118,16 @@ export class AppRepository {
                 launchCount = launchCount + 1,
                 lastUsed = ?
             WHERE id = ?
-        `;
+        `
         
         const result = this.db.prepare(sql).run(duration, new Date().toISOString(), appId);
 
         if (result.changes === 0) {
-            // this.logger.log({
-            //     level: 'warn',
-            //     operation: 'UPDATE_APP_STATS_FAILED',
-            //     message: `Failed to update stats for app ID: ${appId} (App not found)`,
-            // }, 'apps', appId);
+            Logger.info('database-updateAppStats', `Failed to update stats for app ID: ${appId} (App not found)`)
         }
     }
     
-    /**
-     * 模糊搜索应用 (按名称或可执行路径)
-     */
+    // 模糊搜索应用 (按名称或可执行路径)
     public async searchApps(searchTerm: string, limit: number = 20): Promise<AppData[]> {
         // 使用通配符 '%' 包裹搜索词，实现模糊匹配
         const searchPattern = `%${searchTerm.toLowerCase()}%`;

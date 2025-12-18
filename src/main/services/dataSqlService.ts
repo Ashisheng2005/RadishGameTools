@@ -43,11 +43,9 @@ export class DataService {
 
       await this.db.saveApp(appData)
       Logger.info('dataSqlService-saveApp',`save app successful: ${appData.name}` )
-      // console.log(`应用保存成功: ${appData.name}`)
 
     } catch (error) {
       Logger.error('dataSqlService-saveApp', 'save app fail:', error)
-      // console.error('保存应用失败:', error)
       throw error
     }
   }
@@ -108,31 +106,31 @@ export class DataService {
   }
 
   // 记录应用结束
-    async recordAppEnd(sessionId: string, appId: string, durationFromRunner?: number): Promise<Boolean> {
+  async recordAppEnd(sessionId: string, appId: string, durationFromRunner?: number): Promise<Boolean> {
     const endTime = new Date().toISOString()
 
     // 获取会话详情
     const session = await this.db.getSessionById(sessionId)
     if (!session || session.status !== 'running') {
       Logger.warn('dataSqlService-recordAppEnd', `session ${sessionId} not find or ended, countinue processing` )
-      // console.warn(`session ${sessionId} not find or ended, countinue processing`)
+
       try {
         const dbSize = this.db.getDatabaseSize ? this.db.getDatabaseSize() : -1;
         Logger.warn('dataSqlService-recordAppEnd', `DB size: ${dbSize}` )
-        // console.warn(`DB size: ${dbSize}`)
+
         // 列出该 app 最近的 10 条会话以辅助诊断
         const recent = await this.db.getAppSessions(appId, 10)
         Logger.warn('dataSqlService-recordAppEnd', `Recent sessions for app ${appId}: ${recent.map(s => s.id).join(', ')}` )
-        // console.warn(`Recent sessions for app ${appId}: ${recent.map(s => s.id).join(', ')}`)
+
       } catch (err) {
         Logger.error('dataSqlService-recordAppEnd', 'Failed to fetch diagnostic session list', err )
-        // console.warn('Failed to fetch diagnostic session list', err)
       }
 
       // 如果提供了 runner 计算的 duration，我们可以尝试创建一个 completed 的会话记录
       if (durationFromRunner !== undefined) {
         try {
           const computedStart = new Date(Date.now() - durationFromRunner * 1000).toISOString()
+
           // 尝试先更新（以防存在），若无变化则插入
           const updated = await this.db.updateSessionStatus(sessionId, 'completed', endTime)
           if (!updated) {
@@ -149,12 +147,12 @@ export class DataService {
 
           } else {
             Logger.info('dataSqlService-recordAppEnd', `Updated existing session ${sessionId} to completed`)
-            // console.log(`Updated existing session ${sessionId} to completed`)
           }
 
           // 更新统计
           await this.db.updateAppStatistics(appId, durationFromRunner)
           return true
+
         } catch (err) {
           Logger.error('dataSqlService-recordAppEnd', 'Failed to create/update fallback session record', err)
           // console.error('Failed to create/update fallback session record', err)
@@ -175,11 +173,12 @@ export class DataService {
       // console.log(`recordAppEnd session.startTime: ${session.startTime} endTimeDate: ${endTimeDate}`)
 
       // 更新会话状态 用专门的 API，更高效
-      const success = await this.db.updateSessionStatus(sessionId, 'completed', endTime);
+      const success = await this.db.updateSessionStatus(sessionId, 'completed', endTime)
 
       if (success) {
-        // 更新统计信息 (DatabaseService.updateAppStatistics 现在同时更新 App 和 UsageHistory)
-        await this.db.updateAppStatistics(appId, duration);
+        // 更新统计信息 (DatabaseService.updateAppStatistics 更新 UsageHistory)
+        await this.db.updateAppStatistics(appId, duration)
+
       } else {
         // 若更新失败，插入一条完成记录以保证数据完整性
         await this.db.addSession({
@@ -193,6 +192,7 @@ export class DataService {
 
       return true
     }
+
     return false
   }
 

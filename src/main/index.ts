@@ -5,7 +5,6 @@ import { Logger } from './services/loggerService'
 Logger.init()
 
 import { ConfigManager } from './services/configManager'
-// import { join } from 'path'
 import path from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.ico?asset'
@@ -28,7 +27,6 @@ AppLauncher.getInstance()
 // 基于child_process的启动器
 ipcMain.handle("app:launch", async (_, app: AppData) => {
   try {
-    // console.log(`test main index.ts: appp: ${app}`)
     // Logger.info("main.index", `test main index.ts: appp: ${app}`)
     const result = await AppLauncher.launchApp(app)
     return result
@@ -60,8 +58,6 @@ ipcMain.handle('extrace-thumbnail-to-file', (_, filePath: string) => {
   const outputFileName = `icon_${Date.now()}_${path.basename(filePath, path.extname(filePath))}.png`
   const outputPath = path.join(rootPath, "icos", outputFileName)
   Logger.info('main-index', `windows.electronAPI.extrace-thumbnail-to-file:  ${filePath}, ${outputPath}`)
-
-  // console.log(`windows.electronAPI.extrace-thumbnail-to-file:  ${filePath}, ${outputPath}`)
 
   const result = AppIcon.extractThumbnailToFile(filePath, outputPath ,256)
   if (result){
@@ -382,8 +378,13 @@ function createWindow(): void {
   const configManager = ConfigManager.getInstance()
   const config = configManager.getConfig()
 
-  // 设置自启动
+  try{
+    // 设置自启动
   setupAutoStart(config.autoLaunchAtStartup)
+  } catch (error) {
+    Logger.error('mainIndexAutoStart', 'setupAutoStartError', error)
+  }
+  
 
   // 窗口关闭的监听
   mainWindow.on('closed', () => {

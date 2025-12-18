@@ -1,4 +1,3 @@
-// main/AppLauncher.ts
 import { spawn, ChildProcess, execSync } from 'child_process'
 import { EventEmitter } from 'events'
 import { dataService } from '../services/dataSqlService'
@@ -8,7 +7,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 
 export class AppLauncher extends EventEmitter {
-  private static instance: AppLauncher;
+  private static instance: AppLauncher
   private runningApps: Map<string, {
     process: ChildProcess
     startTime: Date
@@ -41,13 +40,13 @@ export class AppLauncher extends EventEmitter {
   }
   
   private constructor() {
-    super();
-    this.setupCleanup();
+    super()
+    this.setupCleanup()
   }
   
   static getInstance(): AppLauncher {
     if (!AppLauncher.instance) {
-      AppLauncher.instance = new AppLauncher();
+      AppLauncher.instance = new AppLauncher()
     }
     return AppLauncher.instance;
   }
@@ -101,7 +100,6 @@ export class AppLauncher extends EventEmitter {
         const updatedAppData: AppData = {
           ...existingData,
           ...app, // 更新基本信息
-          // launchCount: existingData.launchCount | 0 + 1,
           lastUsed: new Date().toISOString()
         }
         
@@ -122,26 +120,25 @@ export class AppLauncher extends EventEmitter {
       if (process.platform === 'win32') {
         // Windows：对于.exe文件直接启动
         if (app.executablePath.toLowerCase().endsWith('.exe')) {
-          childProcess = spawn(app.executablePath, [], options);
+          childProcess = spawn(app.executablePath, [], options)
         } else {
           // 其他文件类型使用cmd
-          childProcess = spawn('cmd', ['/c', `"${app.executablePath}"`], options);
+          childProcess = spawn('cmd', ['/c', `"${app.executablePath}"`], options)
         }
       } else {
         // macOS/Linux
-        childProcess = spawn(app.executablePath, [], options);
+        childProcess = spawn(app.executablePath, [], options)
       }
       
       // 设置进程监听
       childProcess.on('error', (error) => {
         Logger.error('AppLaunch-launchApp', `app ${app.id} start fail:`, error)
-        // console.error(`app ${app.id} start fail:`, error);
-        this.handleProcessExit(app.id, 'crashed', 1);
+        this.handleProcessExit(app.id, 'crashed', 1)
       });
       
       childProcess.on('exit', (code) => {
-        const status = code === 0 ? 'completed' : 'crashed';
-        this.handleProcessExit(app.id, status, code || 0);
+        const status = code === 0 ? 'completed' : 'crashed'
+        this.handleProcessExit(app.id, status, code || 0)
       });
       
       // 记录运行中应用
@@ -152,7 +149,6 @@ export class AppLauncher extends EventEmitter {
       })
       
       Logger.info('AppLaunch-launchApp', `app ${app.id} start successful, PID: ${childProcess.pid}`)
-      // console.log(`app ${app.id} start successful, PID: ${childProcess.pid}`)
 
       // 修改状态标志
       this._activeModification()
@@ -160,79 +156,44 @@ export class AppLauncher extends EventEmitter {
       
     } catch (error: any) {
       Logger.error('AppLaunch-launchApp', `app ${app.id} start fail:`, error)
-      // console.error(`app ${app.id} start fail:`, error);
-      // this.emit('launch-error', { app.id, error: error.message });
       return { success: false, error: error.message }
     }
   }
 
   private async handleProcessExit(appId: string, status: 'completed' | 'crashed' | 'running', exitCode: number): Promise<void> {
-      const runningApp = this.runningApps.get(appId);
+      const runningApp = this.runningApps.get(appId)
+
       if (!runningApp) {
-          Logger.error('AppLaunch-lhandleProcessExit', `No running app found with ID ${appId}`)
-          return;
+        Logger.error('AppLaunch-lhandleProcessExit', `No running app found with ID ${appId}`)
+        return
       }
 
       // 计算运行时间
-      const endTime = new Date();
-      const duration = Math.floor((endTime.getTime() - runningApp.startTime.getTime()) / 1000);
+      const endTime = new Date()
+      const duration = Math.floor((endTime.getTime() - runningApp.startTime.getTime()) / 1000)
 
       try {
-          // 记录应用结束
-            if (runningApp.sessionId) {
-              Logger.info('AppLaunch-launchApp', `Stopping process session ID: ${runningApp.sessionId}`)
-              // console.log(`Stopping process session ID: ${runningApp.sessionId}`);
-              const success = await dataService.recordAppEnd(runningApp.sessionId, appId, duration);
-              if (!success) {
-                Logger.warn('AppLaunch-launchApp', `Session ${runningApp.sessionId} not found or already ended.`)
-                // console.warn(`Session ${runningApp.sessionId} not found or already ended.`);
-              }
-            }
+        // 记录应用结束
+        if (runningApp.sessionId) {
+          Logger.info('AppLaunch-launchApp', `Stopping process session ID: ${runningApp.sessionId}`)
+          const success = await dataService.recordAppEnd(runningApp.sessionId, appId, duration)
+          if (!success) {
+            Logger.warn('AppLaunch-launchApp', `Session ${runningApp.sessionId} not found or already ended.`)
+          }
+        }
 
-          // 更新统计数据
-          await dataService.updateAppStats(appId, duration);
+        // 清理运行记录
+        this.runningApps.delete(appId)
 
-          // 清理运行记录
-          this.runningApps.delete(appId);
+        // 切换状态
+        this._activeModification()
 
-          // 切换状态
-          this._activeModification();
-
-          // 触发事件
-          this.emit('app-exited', { appId, status, exitCode, duration });
+        // 触发事件
+        this.emit('app-exited', { appId, status, exitCode, duration })
       } catch (error) {
-          Logger.error('AppLaunch-lhandleProcessExit', `Error handling process exit for app ${appId}:`, error)
-          // console.error(`Error handling process exit for app ${appId}:`, error);
+        Logger.error('AppLaunch-lhandleProcessExit', `Error handling process exit for app ${appId}:`, error)
       }
-}
-  
-  // 处理进程退出
-  // private async handleProcessExit(appId: string, status: 'completed' | 'crashed' | 'running', exitCode: number): Promise<void> {
-  //   const runningApp = this.runningApps.get(appId)
-  //   if (!runningApp) return
-    
-  //   // 计算运行时间
-  //   const endTime = new Date()
-  //   const duration = Math.floor((endTime.getTime() - runningApp.startTime.getTime()) / 1000)
-    
-  //   // 记录应用结束
-  //   if (runningApp.sessionId) {
-  //     console.log(`stop process session id is: ${runningApp.sessionId}`)
-  //     await dataService.recordAppEnd(runningApp.sessionId, appId)
-  //   }
-    
-  //   // 更新统计数据
-  //   await dataService.updateAppStats(appId, duration)
-    
-  //   // 清理运行记录
-  //   this.runningApps.delete(appId)
-
-  //   // 切换状态
-  //   this._activeModification()
-    
-  //   // 触发事件
-  //   this.emit('app-exited', { appId, status, exitCode, duration })
-  // }
+  }
   
   // 终止应用
   static terminateApp(appId: string, force?: boolean): boolean {
@@ -243,7 +204,6 @@ export class AppLauncher extends EventEmitter {
     const runningApp = this.runningApps.get(appId)
     if (!runningApp){
       Logger.error('AppLauncher_terminateApp', `running is: ${runningApp}`)
-      // console.log(`running is: ${runningApp}`)
       return false
     } 
     
@@ -265,13 +225,13 @@ export class AppLauncher extends EventEmitter {
         return true
       }
     } catch (e) {
-      // ignore
+      // pass
     }
 
     // 尝试优雅/强制终止，并在失败时使用平台降级方案
     try {
       if (force) {
-        Logger.info('AppLauncher_terminateApp', `force kill requested for ${appId}`)
+        Logger.info('AppLauncher-terminateApp', `force kill requested for ${appId}`)
         proc.kill('SIGKILL')
       } else {
         // 优雅终止
@@ -316,6 +276,7 @@ export class AppLauncher extends EventEmitter {
           this._activeModification()
           return true
         }
+
       } catch (fallbackErr) {
         Logger.error('AppLauncher_terminateApp', `fallback taskkill failed for ${appId}`, fallbackErr)
       }
@@ -420,11 +381,6 @@ export class AppLauncher extends EventEmitter {
   private setupCleanup(): void {
     
     process.on('exit', () => {
-
-      // 清理轮询定时器
-      // if (this._pollingTimer) {
-      //     clearInterval(this._pollingTimer);
-      // }
 
       // 清理线程
       this.runningApps.forEach((runningApp, appId) => {

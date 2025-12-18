@@ -1,7 +1,7 @@
 {
-  "theme": "system",
+  "theme": "light",
   "immersiveMode": false,
-  "autoLaunchAtStartup": false,
+  "autoLaunchAtStartup": true,
   "minimizeToSystemTray": false,
   "showOperationHints": false,
   "enableBackupLauncher": true,

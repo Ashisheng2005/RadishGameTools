@@ -163,6 +163,36 @@ pnpm run build:native
   },
 ```
 
+还有一件事, 如果你需要对原生模块做修改，则 native 中也需要配置环境， 否则直接使用 `native/build/Release`下的node文件即可
+
+```json
+{
+  "name": "radish_game_tools_actuator",
+  "version": "0.0.1",
+  "description": "RadishGameTools's actuator",
+  "main": "index.js",
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "build": "node-gyp build",
+    "clean": "node-gyp clean",
+    "rebuild": "node-gyp rebuild",
+    "build:electron": "node-gyp rebuild --target=^38.1.2 --arch=x64 --dist-url=https://electronjs.org/headers"
+  },
+  "keywords": [],
+  "author": "Repork",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.1",
+  "dependencies": {
+    "node-addon-api": "^8.5.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^12.1.0"
+  }
+}
+```
+
+
+
 
 
 ### 开发模式
@@ -203,6 +233,29 @@ pnpm build:linux
 - 从可执行文件提取图标
 - 图标缩略图生成
 - 系统图标缓存
+
+
+
+注意： 如果你需要对原生模块进行再开发，请务必阅读一下提示
+
+1. 完成后进入native目录构建模块
+
+   ```bash
+   pnpm run rebuild
+   ```
+
+   
+
+2. 如果是额外的功能，你需要编写验证脚本验证可用性，如果是对已有的功能做拓展或修复，请执行已有的验证脚本
+
+   ```bash
+   # 记得修改 test-direct.js 中的测试路径
+   node .\src\preload\test-direct.js
+   ```
+
+   
+
+
 
 ## 📈 数据统计功能
 

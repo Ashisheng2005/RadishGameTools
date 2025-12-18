@@ -451,10 +451,12 @@
     "v8_use_siphash": 1,
     "want_separate_host_toolset": 0,
     "nodedir": "C:\\Users\\Repork\\AppData\\Local\\node-gyp\\Cache\\22.14.0",
-    "python": "D:\\python3.12\\python.exe",
+    "python": "D:\\python\\python.exe",
     "standalone_static_library": 1,
     "msbuild_path": "D:\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
     "verify_deps_before_run": "false",
-    "user_agent": "pnpm/10.6.1 npm/? node/v20.11.1 win32 x64"
+    "user_agent": "pnpm/10.6.1 npm/? node/v20.11.1 win32 x64",
+    "registry": "https://registry.npmmirror.com/",
+    "frozen_lockfile": ""
   }
 }

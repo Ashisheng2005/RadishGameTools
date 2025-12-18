@@ -5,6 +5,7 @@ import { AddAppDialog } from "@/components/add-app-dialog"
 import { AppConfig, mockApps, ActiveAppInfo , type AppData, NewAppData } from "@shared/types"
 import { SettingsPage } from "@/components/settings-page"
 import { AppSettingsDialog } from "@/components/app-settings-dialog"
+import { ThemeProvider } from "@/components/themo-provider"
 
 
 export default function LauncherPage() {
@@ -27,70 +28,20 @@ export default function LauncherPage() {
 
   // 软件启动时加载所有应用数据
   useEffect(() => {
-    const fetchConfig = async () => {
-    const configData = await window.electronAPI.getConfig()
-    setConfig(configData) // 将获取到的配置存储到状态中
-  }
-  fetchConfig()
-  loadAllApps()
+    // 使用requestIdleCallback或setTimeout让主题初始化先完成
+    const loadData = async () => {
+      const configData = await window.electronAPI.getConfig()
+      setConfig(configData)
+      await loadAllApps()
+    }
+    
+    // 延迟100ms开始加载数据，让主题初始化先执行
+    loadData()
+    // setTimeout(() => {
+    //   loadData()
+    // }, 100)
   }, [])
 
-  // 统一的状态检测函数
-  // const checkActiveAppsStatus = useCallback(async () => {
-    // if (activeApps.size === 0) return
-    
-    // const now = Date.now();
-    // const promises: Promise<void>[] = []
-    
-  //   activeApps.forEach((info, appId) => {
-  //     // 简单的节流：每2秒检查一次
-  //     if (now - info.lastStatusCheck < 2000) return
-      
-  //     promises.push(
-  //       (async () => {
-  //         try {
-  //           const status = await window.electronAPI.getAppStatus(appId);
-            
-  //           // 如果应用已停止，清理对应的会话
-  //           if (status.status !== 'running') {
-  //             await window.electronAPI.recordAppEnd(info.sessionId, appId)
-  //             setActiveApps(prev => {
-  //               const next = new Map(prev)
-  //               next.delete(appId)
-  //               return next
-  //             })
-  //           }
-            
-  //           // 更新状态
-  //           setAppStatuses(prev => ({
-  //             ...prev,
-  //             [appId]: {
-  //               ...status,
-  //               // 如果应用还在运行，计算实际运行时间
-  //               duration: status.status === 'running' 
-  //                 ? Math.floor((now - info.startTime) / 1000)
-  //                 : status.duration
-  //             }
-  //           }));
-            
-  //           // 更新最后检查时间
-  //           setActiveApps(prev => {
-  //             const next = new Map(prev);
-  //             const appInfo = next.get(appId);
-  //             if (appInfo) {
-  //               next.set(appId, { ...appInfo, lastStatusCheck: now });
-  //             }
-  //             return next;
-  //           });
-            
-  //         } catch (error) {
-  //           console.warn(`检查应用 ${appId} 状态失败:`, error);
-  //         }
-  //       })()
-  //     )
-  //   })
-  //   await Promise.all(promises);
-  // }, [activeApps]);
   const checkActiveAppsStatus = useCallback(async () =>{
     const isUpdate = await window.electronAPI.getModification()
     // console.log(`update ui statue: ${isUpdate.state}`)
@@ -100,7 +51,6 @@ export default function LauncherPage() {
       // 同时同步运行中的应用状态
       try {
         const runningApps = await window.electronAPI.getAllRunningApps()
-        // console.log(`syncRunningApps: received ${runningApps.length} running apps`)
         
         setActiveApps(prev => {
           const next = new Map<string, ActiveAppInfo>()
@@ -167,10 +117,7 @@ useEffect(() => {
 
   const loadAllApps = async () => {
     try {
-      // console.log('Application data is being loaded...')
-      await window.electronAPI.loggerInfo("page", "Application data is being loaded")
-      // const appData = await ipcService.getAllApps()
-      // const appData = await window.electronAPI.invoke('get-all.apps')
+
       const appData = await window.electronAPI.getAllApps()
       // console.log(appData)
       setApps(appData)
@@ -229,15 +176,12 @@ useEffect(() => {
         if (fullAppData) {
             // 仅更新 selectedApp 状态
             setSelectedApp(fullAppData)
-            // console.log(`成功加载 ${appId} 的会话数: ${fullAppData.sessions.length}`)
         } else {
             await window.electronAPI.loggerError("page", `applicaiton ${appId} details were not found.`)
-            // console.error(`应用 ${appId} 详情未找到`)
         }
 
     } catch (error) {
         await window.electronAPI.loggerError("page", `Loading ${appId} fail, error: ${error}`)
-        // console.error(`加载应用详情 ${appId} 失败:`, error)
         setSelectedApp(null)
     }
     }, [])
@@ -420,70 +364,74 @@ useEffect(() => {
   }
 
   return (
-    <div className="flex h-screen w-screen min-h-screen overflow-hidden bg-background fixed inset-0">
-      <ResizableSidebar
-        apps={apps}
-        selectedApp={selectedApp}
-        onSelectApp={handleSelectApp}
-        onAddAppClick={handleAddAppClick}
-        onFileDrop={handleFileDrop}
-        onLaunchApp={handleLaunchAppKernel}
-        onStopApp={handleStopAppKernel}
-        onSettingsClick={() => setShowSettings(true)}
-        AppStatus={activeApps}
-      />
-      <main className="flex-1 overflow-auto h-full">
-        {selectedApp && config ? (
-          <AppDetails
-          app={selectedApp} 
-          config={config}
+    <ThemeProvider defaultTheme={config?.theme} storageKey="vite-ui-theme">
+      <div className="flex h-screen w-screen min-h-screen overflow-hidden bg-background fixed inset-0">
+        <ResizableSidebar
+          apps={apps}
+          selectedApp={selectedApp}
+          onSelectApp={handleSelectApp}
+          onAddAppClick={handleAddAppClick}
+          onFileDrop={handleFileDrop}
           onLaunchApp={handleLaunchAppKernel}
           onStopApp={handleStopAppKernel}
-          onOpenSettings={() => setAppSettingsOpen(true)}
-          appStatus={activeApps.get(selectedApp.id)}
-          // isRunning={isAppRunning(selectedApp)}
-          // onRefreshData={refreshAppData}
-          />
-        ) : (
-          <main className="flex-1 overflow-auto h-full">
+          onSettingsClick={() => setShowSettings(true)}
+          AppStatus={activeApps}
+        />
+        <main className="flex-1 overflow-auto h-full">
           {selectedApp && config ? (
-            <AppDetails 
-              app={selectedApp} 
-              config={config}
-              onLaunchApp={handleLaunchAppKernel}
-              onStopApp={handleStopAppKernel}
-              onOpenSettings={() => setAppSettingsOpen(true)}
-              appStatus={activeApps.get(selectedApp.id)}
+            <AppDetails
+            app={selectedApp} 
+            config={config}
+            onLaunchApp={handleLaunchAppKernel}
+            onStopApp={handleStopAppKernel}
+            onOpenSettings={() => setAppSettingsOpen(true)}
+            appStatus={activeApps.get(selectedApp.id)}
+            // isRunning={isAppRunning(selectedApp)}
+            // onRefreshData={refreshAppData}
             />
           ) : (
-            <div className="flex h-full items-center justify-center">
-              <p className="text-muted-foreground">选择一个应用以查看详情</p>
-            </div>
+            <main className="flex-1 overflow-auto h-full">
+            {selectedApp && config ? (
+              <AppDetails 
+                app={selectedApp} 
+                config={config}
+                onLaunchApp={handleLaunchAppKernel}
+                onStopApp={handleStopAppKernel}
+                onOpenSettings={() => setAppSettingsOpen(true)}
+                appStatus={activeApps.get(selectedApp.id)}
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <p className="text-muted-foreground">选择一个应用以查看详情</p>
+              </div>
+            )}
+          </main>
+
           )}
         </main>
 
-        )}
-      </main>
-
-      <AddAppDialog
-        open={addDialogOpen}
-        config={config!}
-        onOpenChange={setAddDialogOpen}
-        onAdd={handleAddApp}
-        initialPath={initialPath}
-        initialName={initialName}
-      />
-
-      {selectedApp && (
-        <AppSettingsDialog
-          open={appSettingsOpen}
+        <AddAppDialog
+          open={addDialogOpen}
           config={config!}
-          onOpenChange={setAppSettingsOpen}
-          app={selectedApp}
-          onSave={handleSaveAppSettings}
-          onDelete={handleDeleteApp}
+          onOpenChange={setAddDialogOpen}
+          onAdd={handleAddApp}
+          initialPath={initialPath}
+          initialName={initialName}
         />
-      )}
-    </div>
+
+        {selectedApp && (
+          <AppSettingsDialog
+            open={appSettingsOpen}
+            config={config!}
+            onOpenChange={setAppSettingsOpen}
+            app={selectedApp}
+            onSave={handleSaveAppSettings}
+            onDelete={handleDeleteApp}
+          />
+        )}
+      </div>
+    </ThemeProvider>
+
+    
   )
 }

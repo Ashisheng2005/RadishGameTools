@@ -11,7 +11,7 @@ try {
   console.log('可用方法:', Object.keys(nativeModule).filter(k => typeof nativeModule[k] === 'function'));
   
   // 测试提取
-  const testFile = "E:\\galgamebag\\死に逝く君、館に芽吹く憎悪\\[160729][バグシステム]死に逝く君、館に芽吹く憎悪 [汉化硬盘版]\\死に逝く君、館に芽吹く憎悪.exe"; // 使用简单的系统文件测试
+  const testFile = "E:\\Microsoft VS Code\\Code.exe"; // 使用简单的系统文件测试
   const outputFile = 'E:\\RadishGameTools\\icos\\icon-test.png';
   
   console.log('\n测试文件:', testFile);
