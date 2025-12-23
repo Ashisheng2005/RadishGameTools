@@ -1,21 +1,45 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from 'react'
 import {
-  Settings,Moon,Sun,
-  Monitor,Bell,FolderOpen,Database,
-  Trash2,Download,Upload,Info,
-  ChevronLeft,Palette,Cog,Shield,
-  Cpu,SquarePen,MonitorCog,Timer,
-  Users,Scale, Bug, Lightbulb, Send,
+  Settings,
+  Moon,
+  Sun,
+  Monitor,
+  Bell,
+  FolderOpen,
+  Database,
+  Trash2,
+  Download,
+  Upload,
+  Info,
+  ChevronLeft,
+  Palette,
+  Cog,
+  Shield,
+  Cpu,
+  SquarePen,
+  MonitorCog,
+  Timer,
+  Users,
+  Scale,
+  Bug,
+  Lightbulb,
+  Send,
   Search
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,20 +49,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { cn } from "@/lib/utils"
-import { AppConfig } from "@shared/types"
-import { useTheme } from "@/components/themo-provider"
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
+import { cn } from '@/lib/utils'
+import { AppConfig } from '@shared/types'
+import { useTheme } from '@/components/themo-provider'
 
 interface SettingsPageProps {
   onBack: () => void
 }
 
-type SettingsSection = "appearance" | "behavior" | "data" | "about"
+type SettingsSection = 'appearance' | 'behavior' | 'data' | 'about'
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function SettingsPage({ onBack }: SettingsPageProps) {
-  const [selfTheme, setSelfTheme] = useState<"light" | "dark" | "system">("dark")
+  const [selfTheme, setSelfTheme] = useState<'light' | 'dark' | 'system'>('dark')
   const [autoStart, setAutoStart] = useState(false)
   const [minimizeToTray, setMinimizeToTray] = useState(false)
   const [notifications, setNotifications] = useState(false)
@@ -57,8 +82,8 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   const [submitErrorData, setSubmitErrorData] = useState(false)
   // 活动窗口优化
   const [autoOptimizeWindow, setAutoOptimizeWindow] = useState(true)
-  const [dataPath, setDataPath] = useState("null")
-  const [activeSection, setActiveSection] = useState<SettingsSection>("appearance")
+  const [dataPath, setDataPath] = useState('null')
+  const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
   // 全局主题
   const { setTheme } = useTheme()
 
@@ -81,48 +106,76 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
       setAutoOptimizeWindow(config.autoOptimizeWindow ?? false)
       setAutoOptimizeWindow(config.autoOptimizeWindow ?? true)
     })
-  }, [])  // 添加空依赖数组，确保只在组件挂载时执行
+  }, [setTheme]) // 添加空依赖数组，确保只在组件挂载时执行
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleBrowseDataPath = async () => {
     if (window.electronAPI?.isElectron) {
       try {
         const result = await window.electronAPI.openFileDialog({
-          properties: ["openFile"],
+          title: '选择数据保存位置',
+          properties: ['openDirectory']
         })
         if (!result.canceled && result.filePaths.length > 0) {
           setDataPath(result.filePaths[0])
         }
       } catch (error) {
-        console.error("选择文件夹失败:", error)
+        console.error('选择文件夹失败:', error)
       }
     }
   }
 
-  const handleExportData = () => {
-    window.electronAPI.loggerInfo("setting-page", "Export data ...")
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const handleExportData = async () => {
+    if (window.electronAPI?.isElectron) {
+      try {
+        const result = await window.electronAPI.saveFileDialog({
+          title: '选择数据保存位置',
+          properties: ['openDirectory'],
+          filters: [{ name: 'SQLite Database', extensions: ['db'] }]
+        })
+        if (!result.canceled && result.filePaths.length > 0) {
+          setDataPath(result.filePaths[0])
+        }
+      } catch (error) {
+        console.error('选择文件夹失败:', error)
+      }
+    }
+
+    window.electronAPI.loggerInfo('setting-page', 'Export data ...')
   }
 
-  const handleImportData = () => {
-    window.electronAPI.loggerInfo("setting-page", "Import data ...")
-  }
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const handleImportData = () => window.electronAPI.loggerInfo('setting-page', 'Import data ...')
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleClearData = () => {
-    window.electronAPI.loggerInfo("setting-page", "Clear all data ...")
+    window.electronAPI.loggerInfo('setting-page', 'Clear all data ...')
+  }
+
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const submitAbnormalAndSuggestions = async () => {
+    const url = 'https://github.com/Ashisheng2005/RadishGameTools/issues'
+    if (window.electronAPI) {
+      await window.electronAPI.openExternalLink(url)
+    }
   }
 
   const menuItems = [
-    { id: "appearance" as const, label: "外观", icon: Palette },
-    { id: "behavior" as const, label: "行为", icon: Cog },
-    { id: "data" as const, label: "数据与隐私", icon: Shield },
-    { id: "about" as const, label: "关于", icon: Info },
+    { id: 'appearance' as const, label: '外观', icon: Palette },
+    { id: 'behavior' as const, label: '行为', icon: Cog },
+    { id: 'data' as const, label: '数据与隐私', icon: Shield },
+    { id: 'about' as const, label: '关于', icon: Info }
+    // { id: "update" as const, label: "更新", icon: Info }
   ]
 
   // 更新设置
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const updateSetting = () => {
     // 调用IPC保存设置
-    
+
     // 构建新的配置对象
-    const newConfig: AppConfig= {
+    const newConfig: AppConfig = {
       theme: selfTheme,
       autoLaunchAtStartup: autoStart,
       minimizeToSystemTray: minimizeToTray,
@@ -139,7 +192,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
     }
 
     window.electronAPI.setConfig(newConfig)
-    window.electronAPI.loggerInfo("setting-page", "Update settings")
+    window.electronAPI.loggerInfo('setting-page', 'Update settings')
 
     // 调用Back函数返回上一页
     onBack()
@@ -172,10 +225,10 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                   key={item.id}
                   onClick={() => setActiveSection(item.id)}
                   className={cn(
-                    "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-colors",
+                    'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-colors',
                     activeSection === item.id
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
@@ -191,7 +244,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           <div className="p-6">
             <div className="max-w-2xl space-y-6">
               {/* Appearance */}
-              {activeSection === "appearance" && (
+              {activeSection === 'appearance' && (
                 <div className="flex flex-row gap-4">
                   <Card className="bg-card border-border flex-1 min-w-[300px]">
                     <CardHeader>
@@ -204,10 +257,22 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     <CardContent className="space-y-4">
                       <div className="flex items-center justify-between gap-4">
                         <Label htmlFor="selfTheme" className="flex items-center gap-2">
-                          {selfTheme === "dark" ? <Moon className="h-4 w-4" /> : selfTheme === "light" ? <Sun className="h-4 w-4" /> : <MonitorCog className="h-4 w-4" />}
+                          {selfTheme === 'dark' ? (
+                            <Moon className="h-4 w-4" />
+                          ) : selfTheme === 'light' ? (
+                            <Sun className="h-4 w-4" />
+                          ) : (
+                            <MonitorCog className="h-4 w-4" />
+                          )}
                           主题模式
                         </Label>
-                        <Select value={selfTheme} onValueChange={(v) => {setSelfTheme(v as typeof selfTheme); setTheme(v as typeof selfTheme)}}>
+                        <Select
+                          value={selfTheme}
+                          onValueChange={(v) => {
+                            setSelfTheme(v as typeof selfTheme)
+                            setTheme(v as typeof selfTheme)
+                          }}
+                        >
                           <SelectTrigger className="w-[140px] bg-muted/50 border-border">
                             <SelectValue />
                           </SelectTrigger>
@@ -225,7 +290,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Monitor className="h-5 w-5 text-primary" />
-                          详情页
+                        详情页
                       </CardTitle>
                       <CardDescription>配置软件的详情展示</CardDescription>
                     </CardHeader>
@@ -234,7 +299,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                         <div className="space-y-0.5">
                           <Label>
                             <Timer className="h-4 w-4 mr-1" />
-                              显示计时器结果
+                            显示计时器结果
                           </Label>
                           <p className="text-sm text-muted-foreground">时刻刷新详情页计时器结果</p>
                         </div>
@@ -243,11 +308,10 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     </CardContent>
                   </Card>
                 </div>
-                
               )}
 
               {/* Behavior */}
-              {activeSection === "behavior" && (
+              {activeSection === 'behavior' && (
                 <div className="flex flex-row gap-3">
                   <Card className="bg-card border-border min-w-[280px]">
                     <CardHeader>
@@ -269,7 +333,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <div className="flex items-center justify-between gap-2">
                         <div className="space-y-0.5">
                           <Label>最小化到托盘</Label>
-                          <p className="text-sm text-muted-foreground">关闭窗口时最小化到系统托盘</p>
+                          <p className="text-sm text-muted-foreground">
+                            关闭窗口时最小化到系统托盘
+                          </p>
                         </div>
                         <Switch checked={minimizeToTray} onCheckedChange={setMinimizeToTray} />
                       </div>
@@ -299,7 +365,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-0.5">
                           <Label>备份启动器</Label>
-                          <p className="text-sm text-muted-foreground">当默认启动器出现异常时主动唤醒备用启动器</p>
+                          <p className="text-sm text-muted-foreground">
+                            当默认启动器出现异常时主动唤醒备用启动器
+                          </p>
                         </div>
                         <Switch checked={standbylaunch} onCheckedChange={setStandbylaunch} />
                       </div>
@@ -307,7 +375,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <div className="flex items-center justify-between  gap-4">
                         <div className="space-y-0.5">
                           <Label>沉浸模式</Label>
-                          <p className="text-sm text-muted-foreground">任意软件启动成功后自动隐藏此窗口</p>
+                          <p className="text-sm text-muted-foreground">
+                            任意软件启动成功后自动隐藏此窗口
+                          </p>
                         </div>
                         <Switch checked={lmmersion} onCheckedChange={setLmmersion} />
                       </div>
@@ -318,20 +388,20 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                             <SquarePen className="h-4 w-4" />
                             日志记录
                           </Label>
-                          <p className="text-sm text-muted-foreground">所有操作以及产生的数据都记录到日志中</p>
+                          <p className="text-sm text-muted-foreground">
+                            所有操作以及产生的数据都记录到日志中
+                          </p>
                         </div>
                         <Switch checked={startlogger} onCheckedChange={setStartlogger} />
                       </div>
                     </CardContent>
-
                   </Card>
-                  
 
                   <Card className="flex-grow min-w-[320px]">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Cpu className="h-5 w-5 text-primary" />
-                          优化方案
+                        优化方案
                       </CardTitle>
                       <CardDescription>根据个人需求配置优化方案</CardDescription>
                     </CardHeader>
@@ -339,19 +409,22 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <div className="flex items-center justify-between gap-4">
                         <div className="space-y-0.5">
                           <Label>活动窗口优化</Label>
-                          <p className="text-sm text-muted-foreground">仅当窗口处于活动状态时刷新数据</p>
+                          <p className="text-sm text-muted-foreground">
+                            仅当窗口处于活动状态时刷新数据
+                          </p>
                         </div>
-                        <Switch checked={autoOptimizeWindow} onCheckedChange={setAutoOptimizeWindow} />
+                        <Switch
+                          checked={autoOptimizeWindow}
+                          onCheckedChange={setAutoOptimizeWindow}
+                        />
                       </div>
                     </CardContent>
-
                   </Card>
-              </div>
-
+                </div>
               )}
 
               {/* Data & Privacy */}
-              {activeSection === "data" && (
+              {activeSection === 'data' && (
                 <div className="flex flex-row gap-4">
                   <Card className="bg-card border-border min-w-[440px]">
                     <CardHeader>
@@ -365,7 +438,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label>使用统计</Label>
-                          <p className="text-sm text-muted-foreground">记录应用使用时长和启动次数</p>
+                          <p className="text-sm text-muted-foreground">
+                            记录应用使用时长和启动次数
+                          </p>
                         </div>
                         <Switch checked={trackUsage} onCheckedChange={setTrackUsage} />
                       </div>
@@ -374,7 +449,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
                           <Label>自动清理</Label>
-                          <p className="text-sm text-muted-foreground">根据天数自动清理日志等冗余数据</p>
+                          <p className="text-sm text-muted-foreground">
+                            根据天数自动清理日志等冗余数据
+                          </p>
                         </div>
                         <Switch checked={autoCleanup} onCheckedChange={setAutoCleanup} />
                       </div>
@@ -401,11 +478,19 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       </div>
                       <Separator />
                       <div className="flex flex-wrap gap-3">
-                        <Button variant="outline" onClick={handleExportData} className="border-border bg-transparent">
+                        <Button
+                          variant="outline"
+                          onClick={handleExportData}
+                          className="border-border bg-transparent"
+                        >
                           <Download className="h-4 w-4 mr-2" />
                           导出数据
                         </Button>
-                        <Button variant="outline" onClick={handleImportData} className="border-border bg-transparent">
+                        <Button
+                          variant="outline"
+                          onClick={handleImportData}
+                          className="border-border bg-transparent"
+                        >
                           <Upload className="h-4 w-4 mr-2" />
                           导入数据
                         </Button>
@@ -438,12 +523,12 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     </CardContent>
                   </Card>
 
-                  <div className='flex-col gap-y-3 flex min-w-[480px]'>
+                  <div className="flex-col gap-y-3 flex min-w-[480px]">
                     <Card className="bg-card border-border">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Users className="h-5 w-5 text-primary" />
-                            开发者计划
+                          开发者计划
                         </CardTitle>
                         <CardDescription>通过贡献您的异常数据参与开发者计划</CardDescription>
                       </CardHeader>
@@ -454,7 +539,9 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                               <Bug className="h-4 w-4 mr-1" />
                               提交异常数据
                             </Label>
-                            <p className="text-sm text-muted-foreground">当软件出现异常时, 提交异常数据以供开发者修复和完善</p>
+                            <p className="text-sm text-muted-foreground">
+                              当软件出现异常时, 提交异常数据以供开发者修复和完善
+                            </p>
                           </div>
                           <Switch checked={submitErrorData} onCheckedChange={setSubmitErrorData} />
                         </div>
@@ -465,11 +552,17 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                               <Lightbulb className="h-4 w-4 mr-1" />
                               提交优化建议
                             </Label>
-                            <p className="text-sm text-muted-foreground">提交一些您在使用过程中产生的建议</p>
+                            <p className="text-sm text-muted-foreground">
+                              提交一些您在使用过程中产生的建议
+                            </p>
                           </div>
-                          <Button variant="outline" onClick={handleImportData} className="border-border bg-transparent">
+                          <Button
+                            variant="outline"
+                            onClick={submitAbnormalAndSuggestions}
+                            className="border-border bg-transparent"
+                          >
                             <Send className="h-4 w-4 mr-2" />
-                              点击提交
+                            点击提交
                           </Button>
                         </div>
                       </CardContent>
@@ -479,29 +572,34 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Scale className="h-5 w-5 text-primary" />
-                            隐私政策
-                          </CardTitle>
-                          <CardDescription>当你使用该软件即表示您同意并遵守所有要求的隐私政策</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                              <Label>查看隐私政策</Label>
-                            </div>
-                            <Button variant="outline" onClick={handleImportData} className="border-border bg-transparent">
-                              <Search className="h-4 w-4 mr-2" />
-                              点击查看
-                            </Button>
+                          隐私政策
+                        </CardTitle>
+                        <CardDescription>
+                          当你使用该软件即表示您同意并遵守所有要求的隐私政策
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>查看隐私政策</Label>
                           </div>
-                        </CardContent>
+                          <Button
+                            variant="outline"
+                            onClick={handleImportData}
+                            className="border-border bg-transparent"
+                          >
+                            <Search className="h-4 w-4 mr-2" />
+                            点击查看
+                          </Button>
+                        </div>
+                      </CardContent>
                     </Card>
                   </div>
                 </div>
-                
               )}
 
               {/* About */}
-              {activeSection === "about" && (
+              {activeSection === 'about' && (
                 <div className="sm:w-[500px]">
                   <Card className="bg-card border-border">
                     <CardHeader>
@@ -513,7 +611,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
                     <CardContent className="space-y-4">
                       <div className="flex justify-between py-2">
                         <span className="text-muted-foreground">版本</span>
-                        <span className="text-foreground font-medium">dev-0.0.2(内测版)</span>
+                        <span className="text-foreground font-medium">dev-0.0.3(内测版)</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between py-2">

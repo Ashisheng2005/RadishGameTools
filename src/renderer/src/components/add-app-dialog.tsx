@@ -1,54 +1,69 @@
 //  <reference path="../types/electron.d.ts" />
 
-import type React from "react"
-import { useState, useRef, useCallback, useEffect } from "react"
-import { FolderOpen, Plus, X, FileIcon, Upload, Tag } from "lucide-react"
+import type React from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { FolderOpen, Plus, X, FileIcon, Upload, Tag } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
-import { defaultIconMap, NewAppData, AppConfig } from "@shared/types"
-import { findAppIcon } from "./function/iconfinder"
-
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
+import { defaultIconMap, NewAppData, AppConfig } from '@shared/types'
+import { findAppIcon } from './function/iconfinder'
 
 // 图标映射
 const CATEGORY_ICONS: Record<string, string> = defaultIconMap
 
-
 interface AddAppDialogProps {
   open: boolean
-  config: AppConfig,
+  config: AppConfig
   onOpenChange: (open: boolean) => void
   onAdd: (app: NewAppData) => void
   initialPath?: string
   initialName?: string
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function getElectronAPI() {
-  if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
+  if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
     return window.electronAPI
   }
   return null
 }
 
-export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath = "", initialName = "" }: AddAppDialogProps) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function AddAppDialog({
+  open,
+  config,
+  onOpenChange,
+  onAdd,
+  initialPath = '',
+  initialName = ''
+}: AddAppDialogProps) {
   const [name, setName] = useState(initialName)
   const [executablePath, setExecutablePath] = useState(initialPath)
-  const [category, setCategory] = useState("")
-  const [customCategory, setCustomCategory] = useState("")
+  const [category, setCategory] = useState('')
+  const [customCategory, setCustomCategory] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
-  const [customCategories, setCustomCategories] = useState<Array<{ value: string; label: string; color: string }>>([])
-  const [description, setDescription] = useState("")
+  const [customCategories, setCustomCategories] = useState<
+    Array<{ value: string; label: string; color: string }>
+  >([])
+  const [description, setDescription] = useState('')
   const [isDragging, setIsDragging] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   // const [iconPaht, setIconPath] = useState<string | null>(null);
@@ -66,12 +81,12 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
 
   // 重置表单
   const resetForm = useCallback(() => {
-    setName("")
-    setExecutablePath("")
-    setCategory("")
-    setCustomCategory("")
+    setName('')
+    setExecutablePath('')
+    setCategory('')
+    setCustomCategory('')
     setShowCustomInput(false)
-    setDescription("")
+    setDescription('')
     setErrors({})
   }, [])
 
@@ -84,8 +99,8 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
 
   // 从路径提取应用名称
   const extractAppName = (path: string): string => {
-    const fileName = path.split(/[/\\]/).pop() || ""
-    return fileName.replace(/\.exe$/i, "")
+    const fileName = path.split(/[/\\]/).pop() || ''
+    return fileName.replace(/\.exe$/i, '')
   }
 
   // 处理拖放
@@ -111,12 +126,13 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
       if (files.length > 0) {
         const file = files[0]
 
-        if (file.name.endsWith(".exe") || file.type === "application/x-msdownload") {
+        if (file.name.endsWith('.exe') || file.type === 'application/x-msdownload') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const filePath = (file as any).path as string | undefined
 
           if (filePath) {
             setExecutablePath(filePath)
-            setErrors((prev) => ({ ...prev, path: "" }))
+            setErrors((prev) => ({ ...prev, path: '' }))
 
             if (!name) {
               setName(extractAppName(filePath))
@@ -127,7 +143,7 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
               const path = electronAPI.getFilePath(file)
               if (path) {
                 setExecutablePath(path)
-                setErrors((prev) => ({ ...prev, path: "" }))
+                setErrors((prev) => ({ ...prev, path: '' }))
                 if (!name) {
                   setName(extractAppName(path))
                 }
@@ -141,17 +157,18 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
             }
             setErrors((prev) => ({
               ...prev,
-              path: "无法自动获取完整路径，请手动输入",
+              path: '无法自动获取完整路径，请手动输入'
             }))
           }
         } else {
-          setErrors((prev) => ({ ...prev, path: "请拖入 .exe 可执行文件" }))
+          setErrors((prev) => ({ ...prev, path: '请拖入 .exe 可执行文件' }))
         }
       }
     },
-    [name],
+    [name]
   )
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleBrowse = async () => {
     const electronAPI = getElectronAPI()
 
@@ -159,23 +176,23 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
       try {
         const result = await electronAPI.openFileDialog({
           filters: [
-            { name: "可执行文件", extensions: ["exe"] },
-            { name: "所有文件", extensions: ["*"] },
+            { name: '可执行文件', extensions: ['exe'] },
+            { name: '所有文件', extensions: ['*'] }
           ],
-          properties: ["openFile"],
+          properties: ['openFile']
         })
 
         if (!result.canceled && result.filePaths?.[0]) {
           const filePath = result.filePaths[0]
           setExecutablePath(filePath)
-          setErrors((prev) => ({ ...prev, path: "" }))
+          setErrors((prev) => ({ ...prev, path: '' }))
 
           if (!name) {
             setName(extractAppName(filePath))
           }
         }
       } catch (err) {
-        console.error("打开文件对话框失败:", err)
+        console.error('打开文件对话框失败:', err)
         fileInputRef.current?.click()
       }
     } else {
@@ -184,15 +201,17 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       // Electron 环境下 file.path 包含完整路径
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filePath = (file as any).path as string | undefined
 
       if (filePath) {
         setExecutablePath(filePath)
-        setErrors((prev) => ({ ...prev, path: "" }))
+        setErrors((prev) => ({ ...prev, path: '' }))
       }
 
       if (!name) {
@@ -200,20 +219,21 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
       }
     }
     // 重置 input 以便可以重复选择同一文件
-    e.target.value = ""
+    e.target.value = ''
   }
 
   // 添加自定义类型
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleAddCustomCategory = () => {
     if (customCategory.trim()) {
       const newCategory = {
         value: `custom_${Date.now()}`,
         label: customCategory.trim(),
-        color: "#6B7280",
+        color: '#6B7280'
       }
       setCustomCategories([...customCategories, newCategory])
       setCategory(newCategory.value)
-      setCustomCategory("")
+      setCustomCategory('')
       setShowCustomInput(false)
     }
   }
@@ -223,17 +243,17 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) {
-      newErrors.name = "请输入应用名称"
+      newErrors.name = '请输入应用名称'
     }
 
     if (!executablePath.trim()) {
-      newErrors.path = "请选择或输入可执行文件路径"
-    } else if (!executablePath.toLowerCase().endsWith(".exe")) {
-      newErrors.path = "路径必须指向 .exe 文件"
+      newErrors.path = '请选择或输入可执行文件路径'
+    } else if (!executablePath.toLowerCase().endsWith('.exe')) {
+      newErrors.path = '路径必须指向 .exe 文件'
     }
 
     if (!category) {
-      newErrors.category = "请选择应用类型"
+      newErrors.category = '请选择应用类型'
     }
 
     setErrors(newErrors)
@@ -241,6 +261,7 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
   }
 
   // 提交表单
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleSubmit = async () => {
     if (!validateForm()) return
 
@@ -249,35 +270,43 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
     let finalIconPath: string | undefined = undefined
 
     // 查找图标
-    try{
+    try {
       const iconResult = await findAppIcon(executablePath)
 
-      if(iconResult.found){
+      if (iconResult.found) {
         finalIconPath = iconResult.iconPath!
         // setIconPath(iconResult.iconPath!)
-        window.electronAPI.loggerInfo("icon finder", `Found icon for ${iconResult.iconPath}, source: ${iconResult.source}`)
+        window.electronAPI.loggerInfo(
+          'icon finder',
+          `Found icon for ${iconResult.iconPath}, source: ${iconResult.source}`
+        )
         // console.log(`找到图标，来源: ${iconResult.source}`)
-        } else {
-          window.electronAPI.loggerInfo("icon finder", `No icon found for ${executablePath}, using default icon`) 
+      } else {
+        window.electronAPI.loggerInfo(
+          'icon finder',
+          `No icon found for ${executablePath}, using default icon`
           // Logger.info("icon finder", `No icon found for ${executablePath}, using default icon`)
           // console.log("未找到图标，使用默认图标")
-        }
-
-    } catch(error){
-      console.error("查找图标时出错:", error)
+        )
+      }
+    } catch (error) {
+      console.error('查找图标时出错:', error)
     }
 
-    window.electronAPI.loggerInfo("add app", `Adding app: ${name}, path: ${executablePath}, icon: ${finalIconPath || "default"}, icon_default: ${!Boolean(finalIconPath)}`)
+    window.electronAPI.loggerInfo(
+      'add app',
+      `Adding app: ${name}, path: ${executablePath}, icon: ${finalIconPath || 'default'}, icon_default: ${!finalIconPath}`
+    )
     // 调用回调添加应用
     onAdd({
       name: name.trim(),
       executablePath: executablePath.trim(),
       category,
       customCategory: selectedCategory?.label || category,
-      description: description.trim() || `${selectedCategory?.label || "应用"}`,
-      icon_default: !Boolean(finalIconPath),
-      icon: finalIconPath ||  CATEGORY_ICONS[category] || "app",
-      color: selectedCategory?.color || "#6B7280",
+      description: description.trim() || `${selectedCategory?.label || '应用'}`,
+      icon_default: !finalIconPath,
+      icon: finalIconPath || CATEGORY_ICONS[category] || 'app',
+      color: selectedCategory?.color || '#6B7280'
     })
 
     onOpenChange(false)
@@ -294,7 +323,9 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
             <Plus className="h-5 w-5 text-primary" />
             添加新应用
           </DialogTitle>
-          <DialogDescription>添加一个新的应用程序到启动器，支持拖放 .exe 文件快速添加</DialogDescription>
+          <DialogDescription>
+            添加一个新的应用程序到启动器，支持拖放 .exe 文件快速添加
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-5 py-4">
@@ -305,15 +336,20 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={cn(
-              "relative border-2 border-dashed rounded-lg p-6 transition-all cursor-pointer",
-              "flex flex-col items-center justify-center gap-2 text-center",
-              isDragging ? "border-primary bg-primary/10" : "border-border hover:border-muted-foreground/50",
-              errors.path && !executablePath && "border-destructive",
+              'relative border-2 border-dashed rounded-lg p-6 transition-all cursor-pointer',
+              'flex flex-col items-center justify-center gap-2 text-center',
+              isDragging
+                ? 'border-primary bg-primary/10'
+                : 'border-border hover:border-muted-foreground/50',
+              errors.path && !executablePath && 'border-destructive'
             )}
             onClick={handleBrowse}
           >
             <Upload
-              className={cn("h-8 w-8 transition-colors", isDragging ? "text-primary" : "text-muted-foreground")}
+              className={cn(
+                'h-8 w-8 transition-colors',
+                isDragging ? 'text-primary' : 'text-muted-foreground'
+              )}
             />
             <div className="text-sm">
               <span className="font-medium">拖放 .exe 文件到此处</span>
@@ -321,7 +357,7 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
               <span className="text-primary font-medium">点击选择文件</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              {electronAPI ? "支持拖放和文件选择" : "选择后请手动补全路径"}
+              {electronAPI ? '支持拖放和文件选择' : '选择后请手动补全路径'}
             </p>
             <input
               ref={fileInputRef}
@@ -347,13 +383,13 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
                   onChange={(e) => {
                     setExecutablePath(e.target.value)
                     if (errors.path) {
-                      setErrors((prev) => ({ ...prev, path: "" }))
+                      setErrors((prev) => ({ ...prev, path: '' }))
                     }
                   }}
                   placeholder="C:\Program Files\App\app.exe"
                   className={cn(
-                    "pl-9 bg-muted/50 border-border font-mono text-sm",
-                    errors.path && "border-destructive",
+                    'pl-9 bg-muted/50 border-border font-mono text-sm',
+                    errors.path && 'border-destructive'
                   )}
                 />
               </div>
@@ -382,11 +418,11 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
               onChange={(e) => {
                 setName(e.target.value)
                 if (errors.name) {
-                  setErrors((prev) => ({ ...prev, name: "" }))
+                  setErrors((prev) => ({ ...prev, name: '' }))
                 }
               }}
               placeholder="例如: Visual Studio Code"
-              className={cn("bg-muted/50 border-border", errors.name && "border-destructive")}
+              className={cn('bg-muted/50 border-border', errors.name && 'border-destructive')}
             />
             {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
           </div>
@@ -402,12 +438,15 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
                 onValueChange={(val) => {
                   setCategory(val)
                   if (errors.category) {
-                    setErrors((prev) => ({ ...prev, category: "" }))
+                    setErrors((prev) => ({ ...prev, category: '' }))
                   }
                 }}
               >
                 <SelectTrigger
-                  className={cn("flex-1 bg-muted/50 border-border", errors.category && "border-destructive")}
+                  className={cn(
+                    'flex-1 bg-muted/50 border-border',
+                    errors.category && 'border-destructive'
+                  )}
                 >
                   <SelectValue placeholder="选择软件类型" />
                 </SelectTrigger>
@@ -415,7 +454,10 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
                   {allCategories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: cat.color }}
+                        />
                         {cat.label}
                       </div>
                     </SelectItem>
@@ -443,10 +485,15 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
                   onChange={(e) => setCustomCategory(e.target.value)}
                   placeholder="输入自定义类型名称"
                   className="flex-1 bg-muted/50 border-border"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddCustomCategory()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCategory()}
                   autoFocus
                 />
-                <Button type="button" size="sm" onClick={handleAddCustomCategory} disabled={!customCategory.trim()}>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddCustomCategory}
+                  disabled={!customCategory.trim()}
+                >
                   添加
                 </Button>
                 <Button
@@ -455,7 +502,7 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
                   variant="ghost"
                   onClick={() => {
                     setShowCustomInput(false)
-                    setCustomCategory("")
+                    setCustomCategory('')
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -473,7 +520,7 @@ export function AddAppDialog({ open, config,  onOpenChange, onAdd, initialPath =
                     className="text-xs cursor-pointer hover:bg-destructive/20"
                     onClick={() => {
                       setCustomCategories(customCategories.filter((c) => c.value !== cat.value))
-                      if (category === cat.value) setCategory("")
+                      if (category === cat.value) setCategory('')
                     }}
                   >
                     {cat.label}

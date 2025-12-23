@@ -1,10 +1,8 @@
-"use client"
+import type React from 'react'
 
-import type React from "react"
-
-import { Play, Clock, Zap, Search, Plus, Settings } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Play, Clock, Zap, Search, Plus, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Sidebar,
   SidebarContent,
@@ -12,12 +10,12 @@ import {
   SidebarFooter,
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar"
-import { AppIcon } from "@/components/app-icon"
-import { formatDuration } from "@/lib/utils"
-import type { AppData } from "@shared/types"
-import { useState } from "react"
+  SidebarMenuButton
+} from '@/components/ui/sidebar'
+import { AppIcon } from '@/components/app-icon'
+import { formatDuration } from '@/lib/utils'
+import type { AppData } from '@shared/types'
+import { useState } from 'react'
 
 interface AppSidebarProps {
   apps: AppData[]
@@ -25,8 +23,9 @@ interface AppSidebarProps {
   onSelectApp: (app: AppData) => void
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function AppSidebar({ apps, selectedApp, onSelectApp }: AppSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState('')
   const [launchingApp, setLaunchingApp] = useState<string | null>(null)
 
   // Sort by frequency and filter by search
@@ -34,19 +33,20 @@ export function AppSidebar({ apps, selectedApp, onSelectApp }: AppSidebarProps) 
     .filter((app) => app.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => b.launchCount - a.launchCount)
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleLaunch = async (app: AppData, e: React.MouseEvent) => {
     e.stopPropagation()
     setLaunchingApp(app.id)
 
     try {
-      const response = await fetch("/api/launch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ appId: app.id, executablePath: app.executablePath }),
+      const response = await fetch('/api/launch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appId: app.id, executablePath: app.executablePath })
       })
 
       if (!response.ok) {
-        throw new Error("启动失败")
+        throw new Error('启动失败')
       }
 
       console.log(`[v0] Launched app: ${app.name}`)
@@ -92,10 +92,17 @@ export function AppSidebar({ apps, selectedApp, onSelectApp }: AppSidebarProps) 
                 className="h-auto py-3 px-3 hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent"
               >
                 <div className="flex w-full items-center gap-3">
-                  <AppIcon icon_default={app.icon_default} icon={app.icon} color={app.color} size="md" />
+                  <AppIcon
+                    icon_default={app.icon_default}
+                    icon={app.icon}
+                    color={app.color}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sidebar-foreground truncate">{app.name}</span>
+                      <span className="font-medium text-sidebar-foreground truncate">
+                        {app.name}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
                       <Clock className="h-3 w-3" />
@@ -111,7 +118,7 @@ export function AppSidebar({ apps, selectedApp, onSelectApp }: AppSidebarProps) 
                     onClick={(e) => handleLaunch(app, e)}
                     disabled={launchingApp === app.id}
                   >
-                    <Play className={`h-4 w-4 ${launchingApp === app.id ? "animate-pulse" : ""}`} />
+                    <Play className={`h-4 w-4 ${launchingApp === app.id ? 'animate-pulse' : ''}`} />
                     <span className="sr-only">启动 {app.name}</span>
                   </Button>
                 </div>
@@ -131,7 +138,11 @@ export function AppSidebar({ apps, selectedApp, onSelectApp }: AppSidebarProps) 
             <Plus className="mr-2 h-4 w-4" />
             添加应用
           </Button>
-          <Button variant="ghost" size="icon" className="text-sidebar-foreground hover:bg-sidebar-accent">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-sidebar-foreground hover:bg-sidebar-accent"
+          >
             <Settings className="h-4 w-4" />
             <span className="sr-only">设置</span>
           </Button>

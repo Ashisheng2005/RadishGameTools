@@ -12,6 +12,7 @@ try {
   
   // 测试提取
   const testFile = "E:\\Microsoft VS Code\\Code.exe"; // 使用简单的系统文件测试
+  // D:\NTQQ\QQ.exe E:\\CloudMusic\\cloudmusic.exe "E:\\Microsoft VS Code\\Code.exe"
   const outputFile = 'E:\\RadishGameTools\\icos\\icon-test.png';
   
   console.log('\n测试文件:', testFile);

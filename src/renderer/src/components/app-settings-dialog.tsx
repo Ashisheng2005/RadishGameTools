@@ -1,20 +1,24 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Settings, Trash2, FolderOpen, ImageIcon, Tag, Save, X} from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState, useEffect } from 'react'
+import { Settings, Trash2, FolderOpen, ImageIcon, Tag, Save, X } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+  DialogTitle
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,31 +28,41 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { AppIcon } from "@/components/app-icon"
-import type { AppData, AppConfig} from "@shared/types"
-import { cn } from "@/lib/utils"
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog'
+import { AppIcon } from '@/components/app-icon'
+import type { AppData, AppConfig } from '@shared/types'
+import { cn } from '@/lib/utils'
 
 interface AppSettingsDialogProps {
   open: boolean
-  config: AppConfig,
+  config: AppConfig
   onOpenChange: (open: boolean) => void
   app: AppData
   onSave: (updatedApp: AppData) => void
   onDelete: (appId: string) => void
 }
 
-export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onDelete }: AppSettingsDialogProps) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function AppSettingsDialog({
+  open,
+  config,
+  onOpenChange,
+  app,
+  onSave,
+  onDelete
+}: AppSettingsDialogProps) {
   const [name, setName] = useState(app.name)
   const [executablePath, setExecutablePath] = useState(app.executablePath)
-  const [iconPath, setIconPath] = useState("")
-  const [category, setCategory] = useState(app.category || "")
+  const [iconPath, setIconPath] = useState('')
+  const [category, setCategory] = useState(app.category || '')
   const [color, setColor] = useState(app.color)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [customCategories, setCustomCategories] = useState<Array<{ value: string; label: string; color: string }>>([])
+  const [customCategories, setCustomCategories] = useState<
+    Array<{ value: string; label: string; color: string }>
+  >([])
   const [showCustomInput, setShowCustomInput] = useState(false)
-  const [customCategory, setCustomCategory] = useState("")
+  const [customCategory, setCustomCategory] = useState('')
   // 获取配置中定义的软件类型
   const DEFAULT_CATEGORIES = config.categories || []
 
@@ -57,97 +71,102 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
   useEffect(() => {
     setName(app.name)
     setExecutablePath(app.executablePath)
-    setCategory(app.category || "")
+    setCategory(app.category || '')
     setColor(app.color)
-    setIconPath(app.icon_default ? "" : app.icon)
+    setIconPath(app.icon_default ? '' : app.icon)
   }, [app])
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleBrowsePath = async () => {
     if (window.electronAPI?.isElectron) {
       try {
         const result = await window.electronAPI.openFileDialog({
           filters: [
-            { name: "可执行文件", extensions: ["exe"] },
-            { name: "所有文件", extensions: ["*"] },
+            { name: '可执行文件', extensions: ['exe'] },
+            { name: '所有文件', extensions: ['*'] }
           ],
-          properties: ["openFile"],
+          properties: ['openFile']
         })
         if (!result.canceled && result.filePaths.length > 0) {
           setExecutablePath(result.filePaths[0])
         }
       } catch (error) {
-        window.electronAPI.loggerError('app-setting-dialog', "open app info fail:", error)
-        // console.error("打开文件对话框失败:", error)
+        window.electronAPI.loggerError('app-setting-dialog', 'open app info fail:', error)
+        // console.error('打开文件对话框失败:', error)
       }
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleBrowseIcon = async () => {
     if (window.electronAPI?.isElectron) {
       try {
         const result = await window.electronAPI.openFileDialog({
           filters: [
-            { name: "图片文件", extensions: ["png", "jpg", "jpeg", "ico", "svg"] },
-            { name: "所有文件", extensions: ["*"] },
+            { name: '图片文件', extensions: ['png', 'jpg', 'jpeg', 'ico', 'svg'] },
+            { name: '所有文件', extensions: ['*'] }
           ],
-          properties: ["openFile"],
+          properties: ['openFile']
         })
         if (!result.canceled && result.filePaths.length > 0) {
           setIconPath(result.filePaths[0])
         }
       } catch (error) {
-        window.electronAPI.loggerError('app-setting-dialog', "open app info fail:", error)
-        // console.error("打开文件对话框失败:", error)
+        window.electronAPI.loggerError('app-setting-dialog', 'open app info fail:', error)
+        // console.error('打开文件对话框失败:', error)
       }
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleSave = () => {
     const updatedApp: AppData = {
       ...app,
       name,
       executablePath,
       category,
-      color,
+      color
     }
     onSave(updatedApp)
     onOpenChange(false)
   }
 
   // 添加自定义类型
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleAddCustomCategory = () => {
     if (customCategory.trim()) {
       const newCategory = {
         value: `custom_${Date.now()}`,
         label: customCategory.trim(),
-        color: "#6B7280",
+        color: '#6B7280'
       }
       setCustomCategories([...customCategories, newCategory])
       setCategory(newCategory.value)
-      setCustomCategory("")
+      setCustomCategory('')
       setShowCustomInput(false)
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   const handleDelete = () => {
     onDelete(app.id)
     onOpenChange(false)
   }
 
   const presetColors = [
-    "#007ACC",
-    "#4285F4",
-    "#1DB954",
-    "#F24E1E",
-    "#4A154B",
-    "#333333",
-    "#E91E63",
-    "#FF9800",
-    "#00BCD4",
-    "#9C27B0",
+    '#007ACC',
+    '#4285F4',
+    '#1DB954',
+    '#F24E1E',
+    '#4A154B',
+    '#333333',
+    '#E91E63',
+    '#FF9800',
+    '#00BCD4',
+    '#9C27B0'
   ]
 
-  return (  
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[618px] w-[100vw] max-h-[85vh] overflow-y-auto bg-background border-border [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <DialogHeader>
@@ -165,8 +184,10 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
           <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border">
             <AppIcon icon_default={app.icon_default} icon={app.icon} color={color} size="lg" />
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">{name || "未命名应用"}</p>
-              <p className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-[300px]">{executablePath || "未设置路径"}</p>
+              <p className="font-medium text-foreground truncate">{name || '未命名应用'}</p>
+              <p className="text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-[300px]">
+                {executablePath || '未设置路径'}
+              </p>
             </div>
           </div>
 
@@ -236,21 +257,22 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
 
           {/* Category */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              软件类型 
-            </Label>
+            <Label className="text-sm font-medium">软件类型</Label>
             <div className="flex gap-2">
               <Select
                 value={category}
                 onValueChange={(val) => {
                   setCategory(val)
                   if (errors.category) {
-                    setErrors((prev) => ({ ...prev, category: "" }))
+                    setErrors((prev) => ({ ...prev, category: '' }))
                   }
                 }}
               >
                 <SelectTrigger
-                  className={cn("flex-1 bg-muted/50 border-border", errors.category && "border-destructive")}
+                  className={cn(
+                    'flex-1 bg-muted/50 border-border',
+                    errors.category && 'border-destructive'
+                  )}
                 >
                   <SelectValue placeholder="选择软件类型" />
                 </SelectTrigger>
@@ -258,7 +280,10 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
                   {allCategories.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: cat.color }}
+                        />
                         {cat.label}
                       </div>
                     </SelectItem>
@@ -286,10 +311,15 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
                   onChange={(e) => setCustomCategory(e.target.value)}
                   placeholder="输入自定义类型名称"
                   className="flex-1 bg-muted/50 border-border"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddCustomCategory()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomCategory()}
                   autoFocus
                 />
-                <Button type="button" size="sm" onClick={handleAddCustomCategory} disabled={!customCategory.trim()}>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddCustomCategory}
+                  disabled={!customCategory.trim()}
+                >
                   添加
                 </Button>
                 <Button
@@ -298,7 +328,7 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
                   variant="ghost"
                   onClick={() => {
                     setShowCustomInput(false)
-                    setCustomCategory("")
+                    setCustomCategory('')
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -316,7 +346,7 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
                     className="text-xs cursor-pointer hover:bg-destructive/20"
                     onClick={() => {
                       setCustomCategories(customCategories.filter((c) => c.value !== cat.value))
-                      if (category === cat.value) setCategory("")
+                      if (category === cat.value) setCategory('')
                     }}
                   >
                     {cat.label}
@@ -336,7 +366,7 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
                   key={presetColor}
                   type="button"
                   className={`h-8 w-8 rounded-full border-2 transition-all ${
-                    color === presetColor ? "border-foreground scale-110" : "border-transparent"
+                    color === presetColor ? 'border-foreground scale-110' : 'border-transparent'
                   }`}
                   style={{ backgroundColor: presetColor }}
                   onClick={() => setColor(presetColor)}
@@ -364,12 +394,16 @@ export function AppSettingsDialog({ open, config, onOpenChange, app, onSave, onD
               <AlertDialogHeader>
                 <AlertDialogTitle>确认删除？</AlertDialogTitle>
                 <AlertDialogDescription>
-                  此操作将删除 <span className="font-medium">{app.name}</span> 及其所有运行记录，且无法撤销。
+                  此操作将删除 <span className="font-medium">{app.name}</span>{' '}
+                  及其所有运行记录，且无法撤销。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="border-border">取消</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground"
+                >
                   确认删除
                 </AlertDialogAction>
               </AlertDialogFooter>

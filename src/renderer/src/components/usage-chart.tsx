@@ -1,12 +1,11 @@
-"use client"
-
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
-import type { UsageData } from "@shared/types"
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts'
+import type { UsageData } from '@shared/types'
 
 interface UsageChartProps {
   data: UsageData[]
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function UsageChart({ data }: UsageChartProps) {
   return (
     <div className="h-[200px]">
@@ -18,7 +17,13 @@ export function UsageChart({ data }: UsageChartProps) {
               <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+          <XAxis
+            dataKey="date"
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+          />
           <YAxis
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
@@ -28,12 +33,12 @@ export function UsageChart({ data }: UsageChartProps) {
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              color: "hsl(var(--foreground))",
+              backgroundColor: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: '8px',
+              color: 'hsl(var(--foreground))'
             }}
-            formatter={(value: number) => [`${Math.round(value / 60)} 分钟`, "使用时长"]}
+            formatter={(value: number) => [`${Math.round(value / 60)} 分钟`, '使用时长']}
           />
           <Area
             type="monotone"

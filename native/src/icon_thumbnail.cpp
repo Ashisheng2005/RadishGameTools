@@ -101,7 +101,7 @@ bool ProcessBlackEdgesToTransparent(Bitmap* bitmap) {
 }
 
 // 保存位图到内存
-bool SaveBitmapToBuffer(HBITMAP hBitmap, std::vector<BYTE>& buffer) {
+bool _SaveBitmapToBuffer(HBITMAP hBitmap, std::vector<BYTE>& buffer) {
     if (!hBitmap) return false;
 
     // 获取位图的宽高
@@ -116,12 +116,20 @@ bool SaveBitmapToBuffer(HBITMAP hBitmap, std::vector<BYTE>& buffer) {
     
     // std::unique_ptr<Bitmap> bitmap(Bitmap::FromHBITMAP(hBitmap, NULL));
     if (bm.bmBitsPixel == 32) {
-        // 如果是32位位图，我们需要直接读取像素数据以保留 Alpha
+        // 如果是32位位图，需要直接读取像素数据以保留 Alpha
         bitmap.reset(new Bitmap(bm.bmWidth, bm.bmHeight, bm.bmWidthBytes, 
                                PixelFormat32bppARGB, (BYTE*)bm.bmBits));
+        
+        
     } else {
         // 普通位图则直接转换
         bitmap.reset(Bitmap::FromHBITMAP(hBitmap, NULL));
+    }
+
+    // 手动反转y轴
+
+    if (bitmap && bitmap->GetLastStatus() == Ok) {
+        bitmap->RotateFlip(Rotate180FlipY);
     }
 
     if (!bitmap || bitmap->GetLastStatus() != Ok) return false;
@@ -169,6 +177,82 @@ bool SaveBitmapToBuffer(HBITMAP hBitmap, std::vector<BYTE>& buffer) {
     stream->Release();
     
     return true;
+}
+
+bool SaveBitmapToBuffer(HBITMAP hBitmap, std::vector<BYTE>& buffer) {
+    if (!hBitmap) return false;
+
+    // 1. 先从 HBITMAP 创建 GDI+ Bitmap
+    // FromHBITMAP 通常能处理好坐标系（上下颠倒问题），但容易丢 Alpha 通道
+    std::unique_ptr<Bitmap> sourceBitmap(Bitmap::FromHBITMAP(hBitmap, NULL));
+    if (!sourceBitmap || sourceBitmap->GetLastStatus() != Ok) return false;
+
+    int width = sourceBitmap->GetWidth();
+    int height = sourceBitmap->GetHeight();
+
+    // 2. 创建一个全新的、确认为 32bppARGB 格式的位图
+    Bitmap targetBitmap(width, height, PixelFormat32bppARGB);
+    Graphics g(&targetBitmap);
+    
+    // 设置绘图质量
+    g.SetInterpolationMode(InterpolationModeHighQualityBicubic);
+    g.SetSmoothingMode(SmoothingModeHighQuality);
+
+    // 3. 将原始位图画到新位图中
+    // 这一步 GDI+ 会自动处理原始 HBITMAP 的 orientation (颠倒问题)
+    g.DrawImage(sourceBitmap.get(), 0, 0, width, height);
+
+    // 4. 【关键步骤】由于 FromHBITMAP 丢失了 Alpha，我们需要手动找回它
+    // 我们再次锁定原始 HBITMAP 的数据（如果是32位的话）
+    BITMAP bm;
+    GetObject(hBitmap, sizeof(bm), &bm);
+    if (bm.bmBitsPixel == 32 && bm.bmBits != NULL) {
+        BitmapData targetData;
+        Rect rect(0, 0, width, height);
+        if (targetBitmap.LockBits(&rect, ImageLockModeWrite, PixelFormat32bppARGB, &targetData) == Ok) {
+            BYTE* targetPixels = (BYTE*)targetData.Scan0;
+            BYTE* sourcePixels = (BYTE*)bm.bmBits;
+            
+            // 检查原始数据是否也是反向的
+            // 如果 bmHeight 为正数，说明内存里数据是倒着的
+            bool isBottomUp = (bm.bmHeight > 0);
+            
+            for (int y = 0; y < height; y++) {
+                // 如果是 Bottom-Up，源码行需要反向计算
+                int sourceY = isBottomUp ? (height - 1 - y) : y;
+                BYTE* pSrcRow = sourcePixels + (sourceY * bm.bmWidthBytes);
+                BYTE* pDestRow = targetPixels + (y * targetData.Stride);
+                
+                for (int x = 0; x < width; x++) {
+                    // 只把原始数据的 Alpha 通道拷贝过去
+                    // 假设 source 是 BGRA 格式
+                    pDestRow[x * 4 + 3] = pSrcRow[x * 4 + 3]; 
+                }
+            }
+            targetBitmap.UnlockBits(&targetData);
+        }
+    }
+
+    // 5. 保存到流（保持原有的保存逻辑）
+    IStream* stream = NULL;
+    if (CreateStreamOnHGlobal(NULL, TRUE, &stream) != S_OK) return false;
+
+    CLSID clsidPng = GetPngEncoderClsid();
+    if (clsidPng != CLSID_NULL && targetBitmap.Save(stream, &clsidPng, NULL) == Ok) {
+        STATSTG stat;
+        if (stream->Stat(&stat, STATFLAG_NONAME) == S_OK) {
+            HGLOBAL hGlobal = NULL;
+            if (GetHGlobalFromStream(stream, &hGlobal) == S_OK) {
+                BYTE* pData = (BYTE*)GlobalLock(hGlobal);
+                if (pData) {
+                    buffer.assign(pData, pData + stat.cbSize.QuadPart);
+                    GlobalUnlock(hGlobal);
+                }
+            }
+        }
+    }
+    stream->Release();
+    return !buffer.empty();
 }
 
 // 核心提取函数

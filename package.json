@@ -1,7 +1,7 @@
 {
   "name": "radishgametools",
   "version": "0.0.3",
-  "description": "SRadish GameTools",
+  "description": "Radish GameTools",
   "main": "./out/main/index.js",
   "author": "Repork",
   "scripts": {

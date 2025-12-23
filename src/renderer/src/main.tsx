@@ -6,8 +6,8 @@ import { createRoot } from 'react-dom/client'
 import LauncherPage from './app/page'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode >
+  <StrictMode>
     {/* <App /> */}
-    <LauncherPage/>
+    <LauncherPage />
   </StrictMode>
 )
